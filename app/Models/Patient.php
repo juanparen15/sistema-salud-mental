@@ -93,6 +93,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class Patient extends Model
@@ -101,7 +102,7 @@ class Patient extends Model
 
     protected $fillable = [
         'document_number',
-        'document_type',
+        'document_type', 
         'full_name',
         'gender',
         'birth_date',
@@ -111,7 +112,7 @@ class Patient extends Model
         'village',
         'eps_code',
         'eps_name',
-        'status'
+        'status',
     ];
 
     protected $casts = [
@@ -127,15 +128,24 @@ class Patient extends Model
     }
 
     /**
-     * Obtener la edad calculada
+     * Relación directa con seguimientos mensuales (para Filament)
      */
-    public function getAgeAttribute(): int
+    public function followups(): HasMany
     {
-        return $this->birth_date ? $this->birth_date->age : 0;
+        return $this->hasMany(MonthlyFollowup::class, 'followupable_id')
+                    ->where('followupable_type', self::class);
     }
 
     /**
-     * Obtener el último seguimiento
+     * Obtener edad calculada desde birth_date
+     */
+    public function getAgeAttribute(): ?int
+    {
+        return $this->birth_date ? $this->birth_date->age : null;
+    }
+
+    /**
+     * Obtener último seguimiento
      */
     public function getLatestFollowupAttribute()
     {
@@ -143,37 +153,28 @@ class Patient extends Model
     }
 
     /**
-     * Verificar si tiene seguimiento reciente (últimos 30 días)
+     * Verificar si tiene seguimientos recientes
      */
-    public function hasRecentFollowup(): bool
+    public function hasRecentFollowup(int $days = 30): bool
     {
         return $this->monthlyFollowups()
-            ->where('followup_date', '>=', now()->subDays(30))
-            ->exists();
+                   ->where('followup_date', '>=', now()->subDays($days))
+                   ->exists();
     }
 
     /**
-     * Obtener seguimientos completados
+     * Obtener seguimientos por año
      */
-    public function getCompletedFollowupsCount(): int
+    public function getFollowupsByYear(int $year)
     {
         return $this->monthlyFollowups()
-            ->where('status', 'completed')
-            ->count();
+                   ->where('year', $year)
+                   ->orderBy('month')
+                   ->get();
     }
 
     /**
-     * Obtener seguimientos pendientes
-     */
-    public function getPendingFollowupsCount(): int
-    {
-        return $this->monthlyFollowups()
-            ->where('status', 'pending')
-            ->count();
-    }
-
-    /**
-     * Verificar si el paciente está activo
+     * Verificar si está activo
      */
     public function isActive(): bool
     {
@@ -189,21 +190,20 @@ class Patient extends Model
     }
 
     /**
-     * Scope para pacientes con seguimientos pendientes
+     * Scope para búsqueda de pacientes
      */
-    public function scopeWithPendingFollowups($query)
+    public function scopeSearch($query, $search)
     {
-        return $query->whereHas('monthlyFollowups', function ($q) {
-            $q->where('status', 'pending');
-        });
+        return $query->where('full_name', 'like', "%{$search}%")
+                    ->orWhere('document_number', 'like', "%{$search}%");
     }
 
     /**
-     * Scope para pacientes sin seguimiento reciente
+     * Scope para pacientes con seguimientos recientes
      */
-    public function scopeWithoutRecentFollowup($query, $days = 45)
+    public function scopeWithRecentFollowups($query, int $days = 30)
     {
-        return $query->whereDoesntHave('monthlyFollowups', function ($q) use ($days) {
+        return $query->whereHas('monthlyFollowups', function ($q) use ($days) {
             $q->where('followup_date', '>=', now()->subDays($days));
         });
     }

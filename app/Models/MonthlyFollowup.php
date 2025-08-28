@@ -51,7 +51,6 @@
 //     }
 // }
 
-
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -73,17 +72,17 @@ class MonthlyFollowup extends Model
         'status',
         'next_followup',
         'actions_taken',
-        'performed_by',
+        'performed_by'
     ];
 
     protected $casts = [
         'followup_date' => 'date',
         'next_followup' => 'date',
-        'actions_taken' => 'array',
+        'actions_taken' => 'array'
     ];
 
     /**
-     * Relación polimórfica con el modelo seguido (Paciente, etc.)
+     * Relación polimórfica con el modelo seguido
      */
     public function followupable(): MorphTo
     {
@@ -99,7 +98,24 @@ class MonthlyFollowup extends Model
     }
 
     /**
-     * Helper: retorna el paciente si el followupable es un Patient
+     * Relación directa con Patient para Filament
+     * CORREGIDA: Sin condición where que causaba el error
+     */
+    public function patient(): BelongsTo
+    {
+        return $this->belongsTo(Patient::class, 'followupable_id');
+    }
+
+    /**
+     * Relación con User para Filament (alias de performedBy)
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'performed_by');
+    }
+
+    /**
+     * Obtener el paciente solo si followupable_type es Patient
      */
     public function getPatientAttribute(): ?Patient
     {
@@ -107,83 +123,157 @@ class MonthlyFollowup extends Model
     }
 
     /**
-     * -------- STATES --------
+     * Verificar si es un seguimiento de paciente
+     */
+    public function isPatientFollowup(): bool
+    {
+        return $this->followupable_type === Patient::class;
+    }
+
+    /**
+     * Verificar si el seguimiento está completado
      */
     public function isCompleted(): bool
     {
         return $this->status === 'completed';
     }
 
+    /**
+     * Verificar si el seguimiento está pendiente
+     */
     public function isPending(): bool
     {
         return $this->status === 'pending';
     }
 
+    /**
+     * Verificar si no se pudo contactar
+     */
     public function wasNotContacted(): bool
     {
         return $this->status === 'not_contacted';
     }
 
+    /**
+     * Verificar si fue rechazado
+     */
     public function wasRefused(): bool
     {
         return $this->status === 'refused';
     }
 
     /**
-     * -------- ATTRIBUTES --------
+     * Obtener las acciones como string
      */
     public function getActionsAsStringAttribute(): string
     {
-        return $this->actions_taken && is_array($this->actions_taken)
-            ? implode(', ', $this->actions_taken)
-            : '';
+        if (!$this->actions_taken || !is_array($this->actions_taken)) {
+            return '';
+        }
+
+        return implode(', ', $this->actions_taken);
     }
 
+    /**
+     * Verificar si tiene próxima cita programada
+     */
     public function hasNextAppointment(): bool
     {
         return !is_null($this->next_followup);
     }
 
+    /**
+     * Verificar si la próxima cita está vencida
+     */
     public function isNextAppointmentOverdue(): bool
     {
-        return $this->next_followup && $this->next_followup < now();
+        if (!$this->next_followup) {
+            return false;
+        }
+
+        return $this->next_followup < now();
     }
 
+    // ==================== SCOPES ====================
+
     /**
-     * -------- SCOPES --------
+     * Scope para seguimientos por año y mes
      */
     public function scopeForPeriod($query, $year, $month)
     {
         return $query->where('year', $year)->where('month', $month);
     }
 
+    /**
+     * Scope para seguimientos pendientes
+     */
     public function scopePending($query)
     {
         return $query->where('status', 'pending');
     }
 
+    /**
+     * Scope para seguimientos completados
+     */
     public function scopeCompleted($query)
     {
         return $query->where('status', 'completed');
     }
 
+    /**
+     * Scope para seguimientos no contactados
+     */
     public function scopeNotContacted($query)
     {
         return $query->where('status', 'not_contacted');
     }
 
+    /**
+     * Scope para seguimientos rechazados
+     */
     public function scopeRefused($query)
     {
         return $query->where('status', 'refused');
     }
 
+    /**
+     * Scope para seguimientos de pacientes SOLAMENTE
+     */
     public function scopeForPatients($query)
     {
         return $query->where('followupable_type', Patient::class);
     }
 
+    /**
+     * Scope para seguimientos recientes
+     */
     public function scopeRecent($query, $days = 30)
     {
         return $query->where('followup_date', '>=', now()->subDays($days));
+    }
+
+    /**
+     * Scope para seguimientos con pacientes cargados
+     */
+    public function scopeWithPatients($query)
+    {
+        return $query->where('followupable_type', Patient::class)
+                    ->with(['followupable', 'user']);
+    }
+
+    /**
+     * Scope para el año actual
+     */
+    public function scopeCurrentYear($query)
+    {
+        return $query->where('year', now()->year);
+    }
+
+    /**
+     * Scope para seguimientos por estado específico
+     */
+    public function scopeByStatus($query, $status)
+    {
+        return $query->where('status', $status);
     }
 }

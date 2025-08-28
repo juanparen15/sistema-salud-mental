@@ -285,169 +285,169 @@ class ListPatients extends ListRecords
                 })
                 ->modalWidth('xl'),
             
-            Actions\Action::make('downloadTemplate')
-                ->label('Descargar Plantilla')
-                ->icon('heroicon-o-document-arrow-down')
-                ->color('gray')
-                ->action(function () {
-                    try {
-                        // Crear una plantilla simplificada basada en el sistema real
-                        $headers = [
-                            // Primera hoja - Trastornos (simplificada)
-                            [
-                                'HOJA: TRASTORNOS 2025',
-                                '',
-                                '',
-                                '',
-                                '',
-                                '',
-                                '',
-                                '',
-                                '',
-                                '',
-                                '',
-                                '',
-                                '',
-                                '',
-                                '',
-                                '',
-                                '',
-                                '',
-                                '',
-                                '',
-                                ''
-                            ],
-                            [
-                                'FECHA_DE_INGRESO',
-                                'TIPO_DE_INGRESO', 
-                                'N_DOCUMENTO',
-                                'TIPO_DE_DOCUMENTO',
-                                'NOMBRES_Y_APELLIDOS',
-                                'SEX0',
-                                'FECHA_DE_NACIMIENTO',
-                                'TELEFONO',
-                                'DIRECCION',
-                                'VEREDA',
-                                'EPS_CODIGO',
-                                'EPS_NOMBRE',
-                                'DIAGNOSTICO',
-                                'OBSERVACION_ADICIONAL',
-                                'ENERO_2025',
-                                'FEBRERO_2025',
-                                'MARZO_2025',
-                                'ABRIL_2025',
-                                'MAYO_2025',
-                                'JUNIO_2025',
-                                'DICIEMBRE_2025'
-                            ],
-                            [
-                                '2025-01-15',
-                                'Primera vez',
-                                '12345678',
-                                'CC',
-                                'Juan Pérez López',
-                                'M',
-                                '1985-03-15',
-                                '3001234567',
-                                'Calle 123 #45-67',
-                                'El Carmen',
-                                'EPS001',
-                                'Nueva EPS',
-                                'F32 Episodio depresivo',
-                                'Paciente colaborativo',
-                                'Seguimiento inicial',
-                                'Evolución favorable',
-                                '',
-                                '',
-                                '',
-                                '',
-                                'Evaluación final'
-                            ],
-                            [],
-                            [
-                                'HOJA: EVENTO 356 2025 (INTENTOS SUICIDIO)',
-                                '',
-                                '',
-                                '',
-                                '',
-                                '',
-                                '',
-                                '',
-                                '',
-                                '',
-                                '',
-                                '',
-                                '',
-                                '',
-                                '',
-                                '',
-                                ''
-                            ],
-                            [
-                                'FECHA_DE_INGRESO',
-                                'N_DOCUMENTO',
-                                'NOMBRES_Y_APELLIDOS',
-                                'SEXO',
-                                'TELEFONO',
-                                'DIRECCION',
-                                'BARRIO',
-                                'N_INTENTOS',
-                                'DESENCADENANTE',
-                                'FACTORES_DE_RIESGO',
-                                'MECANISMO',
-                                'ENERO_2025',
-                                'FEBRERO_2025',
-                                'MARZO_2025',
-                                'ABRIL_2025',
-                                'MAYO_2025',
-                                'DICIEMBRE_2025'
-                            ],
-                            [
-                                '2025-01-20',
-                                '87654321',
-                                'Ana García',
-                                'F',
-                                '3009876543',
-                                'Carrera 15',
-                                'Centro',
-                                '1',
-                                'Problemas familiares',
-                                'Depresión, aislamiento',
-                                'Intoxicación medicamentos',
-                                'Seguimiento crítico',
-                                'Terapia intensiva',
-                                '',
-                                '',
-                                '',
-                                'Estabilizada'
-                            ]
-                        ];
+            // Actions\Action::make('downloadTemplate')
+            //     ->label('Descargar Plantilla')
+            //     ->icon('heroicon-o-document-arrow-down')
+            //     ->color('gray')
+            //     ->action(function () {
+            //         try {
+            //             // Crear una plantilla simplificada basada en el sistema real
+            //             $headers = [
+            //                 // Primera hoja - Trastornos (simplificada)
+            //                 [
+            //                     'HOJA: TRASTORNOS 2025',
+            //                     '',
+            //                     '',
+            //                     '',
+            //                     '',
+            //                     '',
+            //                     '',
+            //                     '',
+            //                     '',
+            //                     '',
+            //                     '',
+            //                     '',
+            //                     '',
+            //                     '',
+            //                     '',
+            //                     '',
+            //                     '',
+            //                     '',
+            //                     '',
+            //                     '',
+            //                     ''
+            //                 ],
+            //                 [
+            //                     'FECHA_DE_INGRESO',
+            //                     'TIPO_DE_INGRESO', 
+            //                     'N_DOCUMENTO',
+            //                     'TIPO_DE_DOCUMENTO',
+            //                     'NOMBRES_Y_APELLIDOS',
+            //                     'SEX0',
+            //                     'FECHA_DE_NACIMIENTO',
+            //                     'TELEFONO',
+            //                     'DIRECCION',
+            //                     'VEREDA',
+            //                     'EPS_CODIGO',
+            //                     'EPS_NOMBRE',
+            //                     'DIAGNOSTICO',
+            //                     'OBSERVACION_ADICIONAL',
+            //                     'ENERO_2025',
+            //                     'FEBRERO_2025',
+            //                     'MARZO_2025',
+            //                     'ABRIL_2025',
+            //                     'MAYO_2025',
+            //                     'JUNIO_2025',
+            //                     'DICIEMBRE_2025'
+            //                 ],
+            //                 [
+            //                     '2025-01-15',
+            //                     'Primera vez',
+            //                     '12345678',
+            //                     'CC',
+            //                     'Juan Pérez López',
+            //                     'M',
+            //                     '1985-03-15',
+            //                     '3001234567',
+            //                     'Calle 123 #45-67',
+            //                     'El Carmen',
+            //                     'EPS001',
+            //                     'Nueva EPS',
+            //                     'F32 Episodio depresivo',
+            //                     'Paciente colaborativo',
+            //                     'Seguimiento inicial',
+            //                     'Evolución favorable',
+            //                     '',
+            //                     '',
+            //                     '',
+            //                     '',
+            //                     'Evaluación final'
+            //                 ],
+            //                 [],
+            //                 [
+            //                     'HOJA: EVENTO 356 2025 (INTENTOS SUICIDIO)',
+            //                     '',
+            //                     '',
+            //                     '',
+            //                     '',
+            //                     '',
+            //                     '',
+            //                     '',
+            //                     '',
+            //                     '',
+            //                     '',
+            //                     '',
+            //                     '',
+            //                     '',
+            //                     '',
+            //                     '',
+            //                     ''
+            //                 ],
+            //                 [
+            //                     'FECHA_DE_INGRESO',
+            //                     'N_DOCUMENTO',
+            //                     'NOMBRES_Y_APELLIDOS',
+            //                     'SEXO',
+            //                     'TELEFONO',
+            //                     'DIRECCION',
+            //                     'BARRIO',
+            //                     'N_INTENTOS',
+            //                     'DESENCADENANTE',
+            //                     'FACTORES_DE_RIESGO',
+            //                     'MECANISMO',
+            //                     'ENERO_2025',
+            //                     'FEBRERO_2025',
+            //                     'MARZO_2025',
+            //                     'ABRIL_2025',
+            //                     'MAYO_2025',
+            //                     'DICIEMBRE_2025'
+            //                 ],
+            //                 [
+            //                     '2025-01-20',
+            //                     '87654321',
+            //                     'Ana García',
+            //                     'F',
+            //                     '3009876543',
+            //                     'Carrera 15',
+            //                     'Centro',
+            //                     '1',
+            //                     'Problemas familiares',
+            //                     'Depresión, aislamiento',
+            //                     'Intoxicación medicamentos',
+            //                     'Seguimiento crítico',
+            //                     'Terapia intensiva',
+            //                     '',
+            //                     '',
+            //                     '',
+            //                     'Estabilizada'
+            //                 ]
+            //             ];
 
-                        $filename = 'plantilla_salud_mental_' . date('Y-m-d') . '.csv';
-                        $handle = fopen('php://temp', 'w+');
+            //             $filename = 'plantilla_salud_mental_' . date('Y-m-d') . '.csv';
+            //             $handle = fopen('php://temp', 'w+');
                         
-                        fwrite($handle, "\xEF\xBB\xBF");
+            //             fwrite($handle, "\xEF\xBB\xBF");
                         
-                        foreach ($headers as $row) {
-                            fputcsv($handle, $row, ',', '"');
-                        }
+            //             foreach ($headers as $row) {
+            //                 fputcsv($handle, $row, ',', '"');
+            //             }
                         
-                        rewind($handle);
-                        $csvContent = stream_get_contents($handle);
-                        fclose($handle);
+            //             rewind($handle);
+            //             $csvContent = stream_get_contents($handle);
+            //             fclose($handle);
 
-                        return response($csvContent)
-                            ->header('Content-Type', 'text/csv; charset=UTF-8')
-                            ->header('Content-Disposition', 'attachment; filename="' . $filename . '"');
+            //             return response($csvContent)
+            //                 ->header('Content-Type', 'text/csv; charset=UTF-8')
+            //                 ->header('Content-Disposition', 'attachment; filename="' . $filename . '"');
 
-                    } catch (\Exception $e) {
-                        Notification::make()
-                            ->title('Error')
-                            ->body('No se pudo generar la plantilla: ' . $e->getMessage())
-                            ->danger()
-                            ->send();
-                    }
-                }),
+            //         } catch (\Exception $e) {
+            //             Notification::make()
+            //                 ->title('Error')
+            //                 ->body('No se pudo generar la plantilla: ' . $e->getMessage())
+            //                 ->danger()
+            //                 ->send();
+            //         }
+            //     }),
 
             Actions\Action::make('importAdvanced')
                 ->label('Importación Avanzada')

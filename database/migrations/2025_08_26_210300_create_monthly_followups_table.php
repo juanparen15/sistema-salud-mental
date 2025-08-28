@@ -18,9 +18,10 @@ return new class extends Migration
             $table->enum('status', ['pending', 'completed', 'not_contacted', 'refused'])->default('pending');
             $table->date('next_followup')->nullable();
             $table->json('actions_taken')->nullable(); // array de acciones
+            $table->json('source_reference')->nullable(); // Para referencias adicionales
             $table->foreignId('performed_by')->nullable()->constrained('users');
             $table->timestamps();
-            
+
             $table->unique(['followupable_id', 'followupable_type', 'year', 'month'], 'unique_followup');
             $table->index(['year', 'month']);
             $table->index('status');

@@ -33,15 +33,5 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('patients');
-        // Schema::table('patients', function (Blueprint $table) {
-        //     // Volver a los tamaños originales
-        //     $table->string('phone', 20)->nullable();
-        //     $table->string('full_name', 255);
-        //     $table->string('address', 255)->nullable();
-        //     $table->string('neighborhood', 255)->nullable();
-        //     $table->string('village', 255)->nullable();
-        //     $table->string('eps_code', 255)->nullable();
-        //     $table->string('eps_name', 255)->nullable();
-        // });
     }
 };

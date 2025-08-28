@@ -72,13 +72,15 @@ class MonthlyFollowup extends Model
         'status',
         'next_followup',
         'actions_taken',
-        'performed_by'
+        'performed_by',
+        'source_reference',
     ];
 
     protected $casts = [
         'followup_date' => 'date',
         'next_followup' => 'date',
-        'actions_taken' => 'array'
+        'actions_taken' => 'array',
+        'source_reference' => 'array', // Para almacenar referencias adicionales
     ];
 
     /**
@@ -258,7 +260,7 @@ class MonthlyFollowup extends Model
     public function scopeWithPatients($query)
     {
         return $query->where('followupable_type', Patient::class)
-                    ->with(['followupable', 'user']);
+            ->with(['followupable', 'user']);
     }
 
     /**
@@ -275,5 +277,28 @@ class MonthlyFollowup extends Model
     public function scopeByStatus($query, $status)
     {
         return $query->where('status', $status);
+    }
+
+    public function getSourceInfo(): ?array
+    {
+        if (!$this->source_reference) {
+            return null;
+        }
+
+        $source = $this->source_reference;
+
+        if ($source['type'] === 'mental_disorder') {
+            $mentalDisorder = \App\Models\MentalDisorder::find($source['id']);
+            if ($mentalDisorder) {
+                return [
+                    'type' => 'Trastorno Mental',
+                    'description' => $mentalDisorder->diagnosis_description,
+                    'code' => $mentalDisorder->diagnosis_code,
+                    'model' => $mentalDisorder
+                ];
+            }
+        }
+
+        return null;
     }
 }

@@ -217,13 +217,22 @@ class MentalDisorderResource extends Resource
             ->actions([
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
+                // Tables\Actions\Action::make('add_followup')
+                //     ->label('Añadir Seguimiento')
+                //     ->icon('heroicon-o-plus-circle')
+                //     ->color('success')
+                //     ->url(fn($record) => route('filament.admin.resources.monthly-followups.create', [
+                //         'type' => 'mental_disorder',
+                //         'id' => $record->id
+                //     ])),
                 Tables\Actions\Action::make('add_followup')
                     ->label('Añadir Seguimiento')
                     ->icon('heroicon-o-plus-circle')
                     ->color('success')
                     ->url(fn($record) => route('filament.admin.resources.monthly-followups.create', [
-                        'type' => 'mental_disorder',
-                        'id' => $record->id
+                        'patient_id' => $record->patient_id,
+                        'source_type' => 'mental_disorder',
+                        'source_id' => $record->id
                     ])),
             ])
             ->bulkActions([
@@ -248,7 +257,7 @@ class MentalDisorderResource extends Resource
         return static::getModel()::where('status', 'active')->count();
     }
 
-        public static function getNavigationBadgeColor(): ?string
+    public static function getNavigationBadgeColor(): ?string
     {
         return 'danger';
     }

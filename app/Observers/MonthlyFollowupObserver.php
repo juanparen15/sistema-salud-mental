@@ -140,7 +140,13 @@ class MonthlyFollowupObserver
 
         // Verificar acciones tomadas que indican criticidad
         if ($followup->actions_taken) {
-            $actions = json_decode($followup->actions_taken, true) ?? [];
+            // ✅ FIX: Verificar si ya es array o necesita decodificación
+            if (is_array($followup->actions_taken)) {
+                $actions = $followup->actions_taken;
+            } else {
+                $actions = json_decode($followup->actions_taken, true) ?? [];
+            }
+
             $criticalActions = [
                 'Intervención en crisis',
                 'Remisión urgente',

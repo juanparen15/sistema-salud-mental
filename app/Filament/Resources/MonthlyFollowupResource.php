@@ -35,7 +35,7 @@ class MonthlyFollowupResource extends Resource
     {
         return $form
             ->schema([
-                Section::make('Información del Seguimiento')
+                Forms\Components\Section::make('Información del Seguimiento')
                     ->schema([
                         Forms\Components\Select::make('followupable_id')
                             ->label('Paciente')
@@ -47,6 +47,9 @@ class MonthlyFollowupResource extends Resource
                             ->searchable()
                             ->required()
                             ->columnSpanFull()
+                            ->default(function () {
+                                return request()->query('patient_id');
+                            })
                             ->afterStateUpdated(function ($state, $set) {
                                 $set('followupable_type', Patient::class);
                             }),
@@ -86,7 +89,7 @@ class MonthlyFollowupResource extends Resource
                     ])
                     ->columns(2),
 
-                Section::make('Detalles del Seguimiento')
+                Forms\Components\Section::make('Detalles del Seguimiento')
                     ->schema([
                         Forms\Components\Textarea::make('description')
                             ->label('Descripción del Seguimiento')
@@ -117,22 +120,22 @@ class MonthlyFollowupResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('followupable_id')
-                    ->label('Doc. Paciente')
-                    ->formatStateUsing(function ($record) {
-                        if ($record->followupable_type === Patient::class && $record->followupable) {
-                            return $record->followupable->document_number;
-                        }
-                        return 'N/A';
-                    })
-                    ->searchable(query: function (Builder $query, string $search): Builder {
-                        return $query->whereHas('followupable', function (Builder $query) use ($search) {
-                            $query->where('document_number', 'like', "%{$search}%");
-                        });
-                    })
-                    ->sortable(),
+                // Tables\Columns\TextColumn::make('followupable_id')
+                //     ->label('Doc. Paciente')
+                //     ->formatStateUsing(function ($record) {
+                //         if ($record->followupable_type === Patient::class && $record->followupable) {
+                //             return $record->followupable->document_number;
+                //         }
+                //         return 'N/A';
+                //     })
+                //     ->searchable(query: function (Builder $query, string $search): Builder {
+                //         return $query->whereHas('followupable', function (Builder $query) use ($search) {
+                //             $query->where('document_number', 'like', "%{$search}%");
+                //         });
+                //     })
+                //     ->sortable(),
 
-                Tables\Columns\TextColumn::make('followupable.full_name')
+                Tables\Columns\TextColumn::make('followupable_id')
                     ->label('Paciente')
                     ->formatStateUsing(function ($record) {
                         if ($record->followupable_type === Patient::class && $record->followupable) {
@@ -147,6 +150,22 @@ class MonthlyFollowupResource extends Resource
                     })
                     ->sortable()
                     ->wrap(),
+
+                // Tables\Columns\TextColumn::make('followupable_id') // ✅ NUEVO nombre de columna
+                // ->label('Paciente')
+                // ->formatStateUsing(function ($record) {
+                //     if ($record->followupable_type === Patient::class && $record->followupable) {
+                //         return $record->followupable->full_name;
+                //     }
+                //     return 'N/A';
+                // })
+                // ->searchable(query: function (Builder $query, string $search): Builder {
+                //     return $query->whereHas('followupable', function (Builder $query) use ($search) {
+                //         $query->where('full_name', 'like', "%{$search}%");
+                //     });
+                // })
+                // ->sortable() // ✅ DESHABILITADO sorting directo
+                // ->wrap(),
 
                 Tables\Columns\TextColumn::make('followup_date')
                     ->label('Fecha Seguimiento')
@@ -190,7 +209,9 @@ class MonthlyFollowupResource extends Resource
                         'not_contacted' => 'No Contactado',
                         'refused' => 'Rechazado',
                         default => ucfirst($state),
-                    }),
+                    })
+                    ->sortable()
+                    ->wrap(),
 
                 Tables\Columns\TextColumn::make('description')
                     ->label('Descripción')

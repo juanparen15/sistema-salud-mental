@@ -77,14 +77,14 @@ class SuicideAttemptResource extends Resource
                                     ->label('Fecha del Evento')
                                     ->required()
                                     ->default(now()),
-                                
+
                                 Forms\Components\TextInput::make('week_number')
                                     ->label('Número de Semana')
                                     ->numeric()
                                     ->minValue(1)
                                     ->maxValue(53)
                                     ->default(now()->weekOfYear),
-                                
+
                                 Forms\Components\Select::make('admission_via')
                                     ->label('Ingreso Por')
                                     ->options([
@@ -95,18 +95,18 @@ class SuicideAttemptResource extends Resource
                                         'COMUNIDAD' => 'Comunidad',
                                     ])
                                     ->required(),
-                                
+
                                 Forms\Components\TextInput::make('attempt_number')
                                     ->label('Número de Intento')
                                     ->numeric()
                                     ->minValue(1)
                                     ->default(1)
                                     ->required(),
-                                
+
                                 Forms\Components\TextInput::make('benefit_plan')
                                     ->label('Plan de Beneficios')
                                     ->maxLength(255),
-                                
+
                                 Forms\Components\Select::make('status')
                                     ->label('Estado')
                                     ->options([
@@ -125,7 +125,7 @@ class SuicideAttemptResource extends Resource
                             ->label('Factor Desencadenante')
                             ->required()
                             ->maxLength(500),
-                        
+
                         Forms\Components\TagsInput::make('risk_factors')
                             ->label('Factores de Riesgo')
                             ->placeholder('Agregue factores de riesgo')
@@ -144,13 +144,13 @@ class SuicideAttemptResource extends Resource
                                 'Enfermedad crónica',
                             ])
                             ->required(),
-                        
+
                         Forms\Components\Textarea::make('mechanism')
                             ->label('Mecanismo Utilizado')
                             ->required()
                             ->rows(3)
                             ->maxLength(1000),
-                        
+
                         Forms\Components\Textarea::make('additional_observation')
                             ->label('Observaciones Adicionales')
                             ->rows(4)
@@ -167,46 +167,46 @@ class SuicideAttemptResource extends Resource
                     ->label('Documento')
                     ->searchable()
                     ->sortable(),
-                
+
                 Tables\Columns\TextColumn::make('patient.full_name')
                     ->label('Paciente')
                     ->searchable()
                     ->sortable(),
-                
+
                 Tables\Columns\TextColumn::make('event_date')
                     ->label('Fecha Evento')
                     ->dateTime('d/m/Y H:i')
                     ->sortable(),
-                
+
                 Tables\Columns\TextColumn::make('attempt_number')
                     ->label('N° Intento')
                     ->badge()
-                    ->color(fn (int $state): string => match (true) {
+                    ->color(fn(int $state): string => match (true) {
                         $state === 1 => 'warning',
                         $state === 2 => 'danger',
                         $state >= 3 => 'danger',
                         default => 'gray',
                     }),
-                
+
                 Tables\Columns\TextColumn::make('trigger_factor')
                     ->label('Desencadenante')
                     ->limit(30)
-                    ->tooltip(fn ($record) => $record->trigger_factor),
-                
+                    ->tooltip(fn($record) => $record->trigger_factor),
+
                 Tables\Columns\TagsColumn::make('risk_factors')
                     ->label('Factores de Riesgo')
                     ->limit(2),
-                
+
                 Tables\Columns\TextColumn::make('status')
                     ->label('Estado')
                     ->badge()
-                    ->color(fn (string $state): string => match ($state) {
+                    ->color(fn(string $state): string => match ($state) {
                         'active' => 'danger',
                         'inactive' => 'warning',
                         'resolved' => 'success',
                         default => 'gray',
                     }),
-                
+
                 Tables\Columns\TextColumn::make('followups_count')
                     ->label('Seguimientos')
                     ->counts('followups')
@@ -221,28 +221,48 @@ class SuicideAttemptResource extends Resource
                         'inactive' => 'Inactivo',
                         'resolved' => 'Resuelto',
                     ]),
-                
+
                 Tables\Filters\Filter::make('multiple_attempts')
                     ->label('Múltiples Intentos')
-                    ->query(fn (Builder $query): Builder => $query->where('attempt_number', '>', 1)),
-                
+                    ->query(fn(Builder $query): Builder => $query->where('attempt_number', '>', 1)),
+
                 Tables\Filters\Filter::make('recent')
                     ->label('Últimos 30 días')
-                    ->query(fn (Builder $query): Builder => $query->where('event_date', '>=', now()->subDays(30))),
+                    ->query(fn(Builder $query): Builder => $query->where('event_date', '>=', now()->subDays(30))),
             ])
             ->actions([
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
+                // Tables\Actions\Action::make('add_followup')
+                //     ->label('Seguimiento')
+                //     ->icon('heroicon-o-clipboard-document-check')
+                //     ->color('success')
+                //     ->action(function ($record) {
+                //         return redirect()->route('filament.admin.resources.monthly-followups.create', [
+                //             'followupable_type' => 'App\Models\SuicideAttempt',
+                //             'followupable_id' => $record->id,
+                //         ]);
+                //     }),
+
+                // Tables\Actions\Action::make('add_followup')
+                //     ->label('Añadir Seguimiento')
+                //     ->icon('heroicon-o-plus-circle')
+                //     ->color('success')
+                //     ->url(fn($record) => route('filament.admin.resources.monthly-followups.create', [
+                //         'patient_id' => $record->patient_id,
+                //         'source_type' => 'mental_disorder',
+                //         'source_id' => $record->id
+                //     ])),
                 Tables\Actions\Action::make('add_followup')
-                    ->label('Seguimiento')
-                    ->icon('heroicon-o-clipboard-document-check')
+                    ->label('Añadir Seguimiento')
+                    ->icon('heroicon-o-plus-circle')
                     ->color('success')
-                    ->action(function ($record) {
-                        return redirect()->route('filament.admin.resources.monthly-followups.create', [
-                            'followupable_type' => 'App\Models\SuicideAttempt',
-                            'followupable_id' => $record->id,
-                        ]);
-                    }),
+                    ->url(fn($record) => route('filament.admin.resources.monthly-followups.create', [
+                        'patient_id' => $record->patient_id,
+                        'source_type' => 'suicide_attempt',
+                        'source_id' => $record->id
+                    ])),
+
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

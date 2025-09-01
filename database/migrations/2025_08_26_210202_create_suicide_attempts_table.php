@@ -16,9 +16,9 @@ return new class extends Migration
             $table->enum('admission_via', ['URGENCIAS', 'CONSULTA_EXTERNA', 'HOSPITALIZACION', 'REFERENCIA', 'COMUNIDAD']);
             $table->integer('attempt_number')->default(1);
             $table->string('benefit_plan')->nullable();
-            $table->string('trigger_factor'); // desencadenante
-            $table->json('risk_factors'); // factores de riesgo (array)
-            $table->text('mechanism'); // mecanismo utilizado
+            $table->string('trigger_factor')->nullable(); // desencadenante
+            $table->json('risk_factors')->nullable(); // factores de riesgo (array)
+            $table->text('mechanism')->nullable(); // mecanismo utilizado
             $table->text('additional_observation')->nullable();
             $table->enum('status', ['active', 'inactive', 'resolved'])->default('active');
             $table->foreignId('created_by')->nullable()->constrained('users');

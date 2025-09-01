@@ -15,7 +15,7 @@ return new class extends Migration
             $table->enum('admission_via', ['URGENCIAS', 'CONSULTA_EXTERNA', 'HOSPITALIZACION', 'REFERENCIA', 'COMUNIDAD']);
             $table->string('diagnosis');
             $table->json('substances_used'); // array de sustancias
-            $table->enum('consumption_level', ['Alto Riesgo', 'Riesgo Moderado', 'Bajo Riesgo', 'Perjudicial']);
+            $table->enum('consumption_level', ['Alto Riesgo', 'Riesgo Moderado', 'Bajo Riesgo', 'Perjudicial'])->nullable()->default('Bajo Riesgo');
             $table->text('additional_observation')->nullable();
             $table->enum('status', ['active', 'inactive', 'in_treatment', 'recovered'])->default('active');
             $table->foreignId('created_by')->nullable()->constrained('users');

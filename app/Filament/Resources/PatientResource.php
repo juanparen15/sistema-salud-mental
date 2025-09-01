@@ -280,7 +280,7 @@ class PatientResource extends Resource
                             ->required()
                             ->maxLength(20)
                             ->unique(ignoreRecord: true),
-                        
+
                         Forms\Components\Select::make('document_type')
                             ->label('Tipo de Documento')
                             ->options([
@@ -294,12 +294,12 @@ class PatientResource extends Resource
                                 'CN' => 'Certificado de Nacido Vivo',
                             ])
                             ->required(),
-                        
+
                         Forms\Components\TextInput::make('full_name')
                             ->label('Nombre Completo')
                             ->required()
                             ->maxLength(255),
-                        
+
                         Forms\Components\Select::make('gender')
                             ->label('Género')
                             ->options([
@@ -308,12 +308,12 @@ class PatientResource extends Resource
                                 'Otro' => 'Otro',
                             ])
                             ->required(),
-                        
+
                         Forms\Components\DatePicker::make('birth_date')
                             ->label('Fecha de Nacimiento')
                             ->required()
                             ->maxDate(now()),
-                        
+
                         Forms\Components\Select::make('status')
                             ->label('Estado')
                             ->options([
@@ -332,16 +332,16 @@ class PatientResource extends Resource
                             ->label('Teléfono')
                             ->tel()
                             ->maxLength(20),
-                        
+
                         Forms\Components\Textarea::make('address')
                             ->label('Dirección')
                             ->maxLength(255)
                             ->rows(2),
-                        
+
                         Forms\Components\TextInput::make('neighborhood')
                             ->label('Barrio')
                             ->maxLength(100),
-                        
+
                         Forms\Components\TextInput::make('village')
                             ->label('Vereda')
                             ->maxLength(100),
@@ -353,7 +353,7 @@ class PatientResource extends Resource
                         Forms\Components\TextInput::make('eps_code')
                             ->label('Código EPS')
                             ->maxLength(50),
-                        
+
                         Forms\Components\TextInput::make('eps_name')
                             ->label('Nombre EPS')
                             ->maxLength(100),
@@ -370,80 +370,87 @@ class PatientResource extends Resource
                     ->label('Documento')
                     ->searchable()
                     ->sortable(),
-                
+
                 Tables\Columns\TextColumn::make('document_type')
                     ->label('Tipo')
                     ->badge()
-                    ->color(fn (string $state): string => match ($state) {
+                    ->color(fn(string $state): string => match ($state) {
                         'CC' => 'success',
                         'TI' => 'info',
                         'CE' => 'warning',
                         default => 'gray',
                     }),
-                
+
                 Tables\Columns\TextColumn::make('full_name')
                     ->label('Nombre Completo')
                     ->searchable()
                     ->sortable()
                     ->wrap(),
-                
-                Tables\Columns\TextColumn::make('age')
+
+                Tables\Columns\TextColumn::make('birth_date')
                     ->label('Edad')
-                    ->getStateUsing(fn ($record) => $record->age)
+                    ->getStateUsing(fn($record) => $record->birth_date ? $record->birth_date->age : 'N/A')
                     ->sortable(),
-                
+
                 Tables\Columns\TextColumn::make('gender')
                     ->label('Género')
                     ->badge()
-                    ->color(fn (string $state): string => match ($state) {
+                    ->color(fn(string $state): string => match ($state) {
                         'Masculino' => 'blue',
                         'Femenino' => 'pink',
                         'Otro' => 'gray',
                         default => 'gray',
                     }),
-                
+
                 Tables\Columns\TextColumn::make('phone')
                     ->label('Teléfono')
                     ->toggleable(isToggledHiddenByDefault: true),
-                
+
                 Tables\Columns\TextColumn::make('neighborhood')
                     ->label('Barrio')
                     ->toggleable(isToggledHiddenByDefault: true),
-                
+
                 Tables\Columns\TextColumn::make('eps_name')
                     ->label('EPS')
                     ->toggleable(isToggledHiddenByDefault: true),
-                
-                Tables\Columns\TextColumn::make('followups_count')
-                    ->label('Seguimientos')
-                    ->getStateUsing(fn ($record) => $record->monthlyFollowups()->count())
-                    ->badge()
-                    ->color('success'),
-                
-                Tables\Columns\TextColumn::make('latest_followup')
-                    ->label('Último Seguimiento')
-                    ->getStateUsing(function ($record) {
-                        $latest = $record->monthlyFollowups()->latest('followup_date')->first();
-                        return $latest ? $latest->followup_date->format('d/m/Y') : 'Sin seguimiento';
-                    })
-                    ->color(fn ($state) => $state === 'Sin seguimiento' ? 'warning' : 'success'),
-                
+
+                // Tables\Columns\TextColumn::make('followups_count')
+                //     ->label('Seguimientos')
+                //     ->getStateUsing(fn($record) => $record->monthlyFollowups()->count())
+                //     ->badge()
+                //     ->color('success'),
+
+                // Tables\Columns\TextColumn::make('latest_followup')
+                //     ->label('Último Seguimiento')
+                //     ->getStateUsing(function ($record) {
+                //         return \App\Models\MonthlyFollowup::where('followupable_type', $record->followupable_type)
+                //             ->where('followupable_id', $record->followupable_id)
+                //             ->latest('followup_date')
+                //             ->value('followup_date')?->format('d/m/Y') ?? 'Sin seguimiento';
+                //     })
+                //     ->color(fn($state) => $state === 'Sin seguimiento' ? 'warning' : 'success'),
+
+                // Tables\Columns\TextColumn::make('latest_followup_date')
+                //     ->label('Último seguimiento')
+                //     ->getStateUsing(fn($record) => $record->latest_followup?->followup_date?->format('d/m/Y') ?? 'Sin seguimiento')
+                //     ->color(fn($state) => $state === 'Sin seguimiento' ? 'warning' : 'success'),
+
                 Tables\Columns\TextColumn::make('status')
                     ->label('Estado')
                     ->badge()
-                    ->color(fn (string $state): string => match ($state) {
+                    ->color(fn(string $state): string => match ($state) {
                         'active' => 'success',
                         'inactive' => 'warning',
                         'discharged' => 'gray',
                         default => 'gray',
                     })
-                    ->formatStateUsing(fn (string $state): string => match ($state) {
+                    ->formatStateUsing(fn(string $state): string => match ($state) {
                         'active' => 'Activo',
                         'inactive' => 'Inactivo',
                         'discharged' => 'Dado de Alta',
                         default => $state,
                     }),
-                
+
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Registrado')
                     ->dateTime('d/m/Y H:i')
@@ -460,7 +467,7 @@ class PatientResource extends Resource
                         'PA' => 'Pasaporte',
                         'RC' => 'Registro Civil',
                     ]),
-                
+
                 Tables\Filters\SelectFilter::make('gender')
                     ->label('Género')
                     ->options([
@@ -468,7 +475,7 @@ class PatientResource extends Resource
                         'Femenino' => 'Femenino',
                         'Otro' => 'Otro',
                     ]),
-                
+
                 Tables\Filters\SelectFilter::make('status')
                     ->label('Estado')
                     ->options([
@@ -476,7 +483,7 @@ class PatientResource extends Resource
                         'inactive' => 'Inactivo',
                         'discharged' => 'Dado de Alta',
                     ]),
-                
+
                 Tables\Filters\Filter::make('age_range')
                     ->label('Rango de Edad')
                     ->form([
@@ -498,22 +505,30 @@ class PatientResource extends Resource
                                 return $query->where('birth_date', '>=', $maxDate);
                             });
                     }),
-                
-                Tables\Filters\Filter::make('with_recent_followup')
-                    ->label('Con seguimiento reciente')
-                    ->query(fn (Builder $query): Builder => 
-                        $query->whereHas('monthlyFollowups', fn ($query) => 
-                            $query->where('followup_date', '>=', now()->subDays(30))
-                        )
-                    ),
-                
-                Tables\Filters\Filter::make('without_recent_followup')
-                    ->label('Sin seguimiento reciente')
-                    ->query(fn (Builder $query): Builder => 
-                        $query->whereDoesntHave('monthlyFollowups', fn ($query) => 
-                            $query->where('followup_date', '>=', now()->subDays(45))
-                        )
-                    ),
+
+                // Tables\Filters\Filter::make('with_recent_followup')
+                //     ->label('Con seguimiento reciente (30 días)')
+                //     ->query(
+                //         fn(Builder $query): Builder =>
+                //         $query->whereHas(
+                //             'monthlyFollowups',
+                //             fn($query) =>
+                //             $query->whereDate('followup_date', '>=', now()->subDays(30)->toDateString())
+                //         )
+                //     ),
+
+                // Tables\Filters\Filter::make('without_recent_followup')
+                //     ->label('Sin seguimiento reciente (30 días)')
+                //     ->query(
+                //         fn(Builder $query): Builder =>
+                //         $query->whereDoesntHave(
+                //             'monthlyFollowups',
+                //             fn($query) =>
+                //             $query->whereDate('followup_date', '>=', now()->subDays(30)->toDateString())
+                //         )
+                //     ),
+
+
             ])
             ->actions([
                 Tables\Actions\ViewAction::make(),

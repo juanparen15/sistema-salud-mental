@@ -5,6 +5,9 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\MonthlyFollowupResource\Pages;
 use App\Models\MonthlyFollowup;
 use App\Models\Patient;
+use App\Models\MentalDisorder;
+use App\Models\SuicideAttempt;
+use App\Models\SubstanceConsumption;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -16,6 +19,7 @@ use Filament\Forms\Components\Section;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Actions\BulkActionGroup;
 use Filament\Tables\Actions\DeleteBulkAction;
+use Illuminate\Support\Str;
 
 class MonthlyFollowupResource extends Resource
 {
@@ -37,25 +41,116 @@ class MonthlyFollowupResource extends Resource
             ->schema([
                 Forms\Components\Section::make('Información del Seguimiento')
                     ->schema([
+                        // Selector de tipo de caso
+                        // Forms\Components\Select::make('followupable_type')
+                        //     ->label('Tipo de Caso')
+                        //     ->options([
+                        //         MentalDisorder::class => 'Trastorno Mental',
+                        //         SuicideAttempt::class => 'Intento de Suicidio',
+                        //         SubstanceConsumption::class => 'Consumo SPA',
+                        //     ])
+                        //     ->required()
+                        //     ->reactive()
+                        //     ->afterStateUpdated(function ($state, $set) {
+                        //         $set('followupable_id', null); // Limpiar selección anterior
+                        //     }),
+
+                        Forms\Components\Select::make('followupable_type')
+                            ->label('Tipo de Caso')
+                            ->options([
+                                MentalDisorder::class => 'Trastorno Mental',
+                                SuicideAttempt::class => 'Intento de Suicidio',
+                                SubstanceConsumption::class => 'Consumo SPA',
+                            ])
+                            ->required()
+                            ->reactive()
+                            ->disabled(fn() => (bool)request()->query('source_type'))
+                            ->default(function () {
+                                $sourceType = request()->query('source_type');
+                                return match ($sourceType) {
+                                    'mental_disorder' => MentalDisorder::class,
+                                    'suicide_attempt' => SuicideAttempt::class,
+                                    'substance_consumption' => SubstanceConsumption::class,
+                                    default => null
+                                };
+                            })
+                            ->afterStateUpdated(fn($state, $set) => $set('followupable_id', null)),
+
+                        // Selector de caso específico basado en el tipo
+                        // Forms\Components\Select::make('followupable_id')
+                        //     ->label('Caso Específico')
+                        //     ->options(function (callable $get) {
+                        //         $type = $get('followupable_type');
+                        //         if (!$type) return [];
+
+                        //         return match ($type) {
+                        //             MentalDisorder::class => MentalDisorder::with('patient')
+                        //                 ->get()
+                        //                 ->mapWithKeys(function ($case) {
+                        //                     return [
+                        //                         $case->id =>
+                        //                         $case->patient->full_name . ' - ' .
+                        //                             $case->patient->document_number . ' | ' .
+                        //                             ($case->diagnosis_code ?? 'Sin código') . ' - ' .
+                        //                             Str::limit($case->diagnosis_description ?? 'Sin diagnóstico', 40)
+                        //                     ];
+                        //                 }),
+                        //             SuicideAttempt::class => SuicideAttempt::with('patient')
+                        //                 ->get()
+                        //                 ->mapWithKeys(function ($case) {
+                        //                     return [
+                        //                         $case->id =>
+                        //                         $case->patient->full_name . ' - ' .
+                        //                             $case->patient->document_number . ' | ' .
+                        //                             'Intento #' . ($case->attempt_number ?? '1') . ' - ' .
+                        //                             Str::limit($case->mechanism ?? 'Sin mecanismo', 40)
+                        //                     ];
+                        //                 }),
+                        //             SubstanceConsumption::class => SubstanceConsumption::with('patient')
+                        //                 ->get()
+                        //                 ->mapWithKeys(function ($case) {
+                        //                     return [
+                        //                         $case->id =>
+                        //                         $case->patient->full_name . ' - ' .
+                        //                             $case->patient->document_number . ' | ' .
+                        //                             ($case->consumption_level ?? 'Sin nivel') . ' - ' .
+                        //                             Str::limit($case->diagnosis ?? 'Sin diagnóstico', 40)
+                        //                     ];
+                        //                 }),
+                        //             default => []
+                        //         };
+                        //     })
+                        //     ->searchable()
+                        //     ->required()
+                        //     ->columnSpanFull()
+                        //     ->placeholder('Primero selecciona el tipo de caso'),
+
                         Forms\Components\Select::make('followupable_id')
-                            ->label('Paciente')
-                            ->options(function () {
-                                return Patient::all()->mapWithKeys(function ($patient) {
-                                    return [$patient->id => $patient->full_name . ' - ' . $patient->document_number];
-                                });
+                            ->label('Caso Específico')
+                            ->options(function (callable $get) {
+                                $type = $get('followupable_type');
+                                if (!$type) return [];
+                                return match ($type) {
+                                    MentalDisorder::class => MentalDisorder::with('patient')->get()->mapWithKeys(fn($case) => [
+                                        $case->id => $case->patient->full_name . ' - ' . $case->patient->document_number
+                                    ]),
+                                    SuicideAttempt::class => SuicideAttempt::with('patient')->get()->mapWithKeys(fn($case) => [
+                                        $case->id => $case->patient->full_name . ' - ' . $case->patient->document_number
+                                    ]),
+                                    SubstanceConsumption::class => SubstanceConsumption::with('patient')->get()->mapWithKeys(fn($case) => [
+                                        $case->id => $case->patient->full_name . ' - ' . $case->patient->document_number
+                                    ]),
+                                    default => []
+                                };
                             })
                             ->searchable()
                             ->required()
                             ->columnSpanFull()
+                            ->disabled(fn() => (bool)request()->query('source_id'))
                             ->default(function () {
-                                return request()->query('patient_id');
+                                return request()->query('source_id');
                             })
-                            ->afterStateUpdated(function ($state, $set) {
-                                $set('followupable_type', Patient::class);
-                            }),
-
-                        Forms\Components\Hidden::make('followupable_type')
-                            ->default(Patient::class),
+                            ->placeholder('Primero selecciona el tipo de caso'),
 
                         Forms\Components\DatePicker::make('followup_date')
                             ->label('Fecha de Seguimiento')
@@ -120,52 +215,92 @@ class MonthlyFollowupResource extends Resource
     {
         return $table
             ->columns([
-                // Tables\Columns\TextColumn::make('followupable_id')
-                //     ->label('Doc. Paciente')
-                //     ->formatStateUsing(function ($record) {
-                //         if ($record->followupable_type === Patient::class && $record->followupable) {
-                //             return $record->followupable->document_number;
-                //         }
-                //         return 'N/A';
-                //     })
-                //     ->searchable(query: function (Builder $query, string $search): Builder {
-                //         return $query->whereHas('followupable', function (Builder $query) use ($search) {
-                //             $query->where('document_number', 'like', "%{$search}%");
-                //         });
-                //     })
-                //     ->sortable(),
-
-                Tables\Columns\TextColumn::make('followupable_id')
+                // Información del paciente
+                Tables\Columns\TextColumn::make('patient')
                     ->label('Paciente')
                     ->formatStateUsing(function ($record) {
-                        if ($record->followupable_type === Patient::class && $record->followupable) {
-                            return $record->followupable->full_name;
+                        if ($record->followupable && $record->followupable->patient) {
+                            $patient = $record->followupable->patient;
+                            return $patient->document_number . ' - ' . $patient->full_name;
                         }
                         return 'N/A';
                     })
                     ->searchable(query: function (Builder $query, string $search): Builder {
-                        return $query->whereHas('followupable', function (Builder $query) use ($search) {
-                            $query->where('full_name', 'like', "%{$search}%");
-                        });
+                        return $query->whereHasMorph(
+                            'followupable',
+                            [MentalDisorder::class, SuicideAttempt::class, SubstanceConsumption::class],
+                            function (Builder $q) use ($search) {
+                                $q->whereHas('patient', function (Builder $patientQuery) use ($search) {
+                                    $patientQuery->where('full_name', 'like', "%{$search}%")
+                                        ->orWhere('document_number', 'like', "%{$search}%");
+                                });
+                            }
+                        );
                     })
-                    ->sortable()
                     ->wrap(),
 
-                // Tables\Columns\TextColumn::make('followupable_id') // ✅ NUEVO nombre de columna
-                // ->label('Paciente')
-                // ->formatStateUsing(function ($record) {
-                //     if ($record->followupable_type === Patient::class && $record->followupable) {
-                //         return $record->followupable->full_name;
-                //     }
-                //     return 'N/A';
-                // })
-                // ->searchable(query: function (Builder $query, string $search): Builder {
-                //     return $query->whereHas('followupable', function (Builder $query) use ($search) {
-                //         $query->where('full_name', 'like', "%{$search}%");
-                //     });
-                // })
-                // ->sortable() // ✅ DESHABILITADO sorting directo
-                // ->wrap(),
+                // Tipo de caso
+                Tables\Columns\BadgeColumn::make('case_type')
+                    ->label('Tipo de Caso')
+                    ->formatStateUsing(function ($record) {
+                        return match ($record->followupable_type) {
+                            MentalDisorder::class => 'Trastorno Mental',
+                            SuicideAttempt::class => 'Intento Suicidio',
+                            SubstanceConsumption::class => 'Consumo SPA',
+                            default => 'Desconocido'
+                        };
+                    })
+                    ->colors([
+                        'primary' => MentalDisorder::class,
+                        'danger' => SuicideAttempt::class,
+                        'warning' => SubstanceConsumption::class,
+                        'gray' => fn($state) => $state === 'Desconocido',
+                    ])
+                    ->icons([
+                        'heroicon-o-heart' => MentalDisorder::class,
+                        'heroicon-o-exclamation-triangle' => SuicideAttempt::class,
+                        'heroicon-o-beaker' => SubstanceConsumption::class,
+                    ]),
+
+                // Detalles del caso
+                Tables\Columns\TextColumn::make('case_details')
+                    ->label('Detalles del Caso')
+                    ->formatStateUsing(function ($record) {
+                        if (!$record->followupable) return 'N/A';
+
+                        return match ($record->followupable_type) {
+                            MentalDisorder::class => ($record->followupable->diagnosis_code ?? 'Sin código') . ' - ' .
+                                Str::limit($record->followupable->diagnosis_description ?? 'Sin descripción', 40),
+                            SuicideAttempt::class =>
+                            'Intento #' . ($record->followupable->attempt_number ?? '1') . ' - ' .
+                                Str::limit($record->followupable->mechanism ?? 'Sin mecanismo', 40),
+                            SubstanceConsumption::class =>
+                            'Nivel: ' . ($record->followupable->consumption_level ?? 'N/A') . ' - ' .
+                                Str::limit($record->followupable->diagnosis ?? 'Sin diagnóstico', 40),
+                            default => 'N/A'
+                        };
+                    })
+                    ->wrap()
+                    ->tooltip(function ($record) {
+                        if (!$record->followupable) return '';
+
+                        return match ($record->followupable_type) {
+                            MentalDisorder::class =>
+                            "Código: " . ($record->followupable->diagnosis_code ?? 'N/A') . "\n" .
+                                "Diagnóstico: " . ($record->followupable->diagnosis_description ?? 'N/A') . "\n" .
+                                "Tipo ingreso: " . ($record->followupable->admission_type ?? 'N/A'),
+                            SuicideAttempt::class =>
+                            "Intentos: " . ($record->followupable->attempt_number ?? '1') . "\n" .
+                                "Mecanismo: " . ($record->followupable->mechanism ?? 'N/A') . "\n" .
+                                "Factor desencadenante: " . ($record->followupable->trigger_factor ?? 'N/A'),
+                            SubstanceConsumption::class =>
+                            "Sustancias: " . (is_array($record->followupable->substances_used)
+                                ? implode(', ', $record->followupable->substances_used)
+                                : 'N/A') . "\n" .
+                                "Nivel consumo: " . ($record->followupable->consumption_level ?? 'N/A'),
+                            default => ''
+                        };
+                    }),
 
                 Tables\Columns\TextColumn::make('followup_date')
                     ->label('Fecha Seguimiento')
@@ -209,17 +344,13 @@ class MonthlyFollowupResource extends Resource
                         'not_contacted' => 'No Contactado',
                         'refused' => 'Rechazado',
                         default => ucfirst($state),
-                    })
-                    ->sortable()
-                    ->wrap(),
+                    }),
 
                 Tables\Columns\TextColumn::make('description')
                     ->label('Descripción')
                     ->limit(50)
                     ->wrap()
-                    ->tooltip(function ($record) {
-                        return $record->description;
-                    }),
+                    ->tooltip(fn($record) => $record->description),
 
                 Tables\Columns\TextColumn::make('actions_taken')
                     ->label('Acciones')
@@ -232,7 +363,7 @@ class MonthlyFollowupResource extends Resource
                     ->limit(30)
                     ->tooltip(function ($record) {
                         if (is_array($record->actions_taken)) {
-                            return implode("\n• ", $record->actions_taken);
+                            return "• " . implode("\n• ", $record->actions_taken);
                         }
                         return $record->actions_taken;
                     }),
@@ -251,9 +382,12 @@ class MonthlyFollowupResource extends Resource
                         return $color . ' ' . $state->format('d/m/Y');
                     }),
 
-                Tables\Columns\TextColumn::make('user.name')
+                Tables\Columns\TextColumn::make('performed_by_name')
                     ->label('Registrado por')
-                    ->sortable()
+                    ->formatStateUsing(function ($record) {
+                        return $record->user ? $record->user->name : 'N/A';
+                    })
+                    ->sortable(false)
                     ->toggleable(isToggledHiddenByDefault: true),
 
                 Tables\Columns\TextColumn::make('created_at')
@@ -263,14 +397,35 @@ class MonthlyFollowupResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                SelectFilter::make('followupable_id')
+                // Filtro por tipo de caso
+                SelectFilter::make('followupable_type')
+                    ->label('Tipo de Caso')
+                    ->options([
+                        MentalDisorder::class => 'Trastorno Mental',
+                        SuicideAttempt::class => 'Intento Suicidio',
+                        SubstanceConsumption::class => 'Consumo SPA',
+                    ]),
+
+                // Filtro por paciente
+                SelectFilter::make('patient')
                     ->label('Paciente')
                     ->options(function () {
                         return Patient::all()->mapWithKeys(function ($patient) {
                             return [$patient->id => $patient->full_name . ' - ' . $patient->document_number];
                         });
                     })
-                    ->searchable(),
+                    ->searchable()
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query->when($data['value'], function (Builder $query) use ($data) {
+                            $query->whereHasMorph(
+                                'followupable',
+                                [MentalDisorder::class, SuicideAttempt::class, SubstanceConsumption::class],
+                                function (Builder $q) use ($data) {
+                                    $q->where('patient_id', $data['value']);
+                                }
+                            );
+                        });
+                    }),
 
                 SelectFilter::make('status')
                     ->label('Estado')
@@ -321,6 +476,28 @@ class MonthlyFollowupResource extends Resource
                         fn(Builder $query): Builder =>
                         $query->where('followup_date', '>=', now()->subDays(30))
                     ),
+
+                // Filtros por tipo específico
+                Tables\Filters\Filter::make('mental_disorders_only')
+                    ->label('Solo Trastornos Mentales')
+                    ->query(
+                        fn(Builder $query): Builder =>
+                        $query->where('followupable_type', MentalDisorder::class)
+                    ),
+
+                Tables\Filters\Filter::make('suicide_attempts_only')
+                    ->label('Solo Intentos Suicidio')
+                    ->query(
+                        fn(Builder $query): Builder =>
+                        $query->where('followupable_type', SuicideAttempt::class)
+                    ),
+
+                Tables\Filters\Filter::make('substance_consumption_only')
+                    ->label('Solo Consumo SPA')
+                    ->query(
+                        fn(Builder $query): Builder =>
+                        $query->where('followupable_type', SubstanceConsumption::class)
+                    ),
             ])
             ->actions([
                 Tables\Actions\ViewAction::make(),
@@ -342,7 +519,6 @@ class MonthlyFollowupResource extends Resource
         return [
             'index' => Pages\ListMonthlyFollowups::route('/'),
             'create' => Pages\CreateMonthlyFollowup::route('/create'),
-            // 'view' => Pages\ViewMonthlyFollowup::route('/{record}'),
             'edit' => Pages\EditMonthlyFollowup::route('/{record}/edit'),
         ];
     }
@@ -350,25 +526,25 @@ class MonthlyFollowupResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
-            ->withoutGlobalScopes([
-                SoftDeletingScope::class,
-            ])
-            ->with(['followupable', 'user']) // Usar followupable en lugar de patient
-            ->where('followupable_type', Patient::class); // Filtro para solo pacientes
+            ->withoutGlobalScopes([SoftDeletingScope::class])
+            ->with([
+                'followupable.patient', // Cargar tanto el caso como su paciente
+                'user'
+            ]);
+        // ✅ REMOVIDO: ->where('followupable_type', Patient::class)
+        // Ahora mostrará seguimientos de todos los tipos de casos
     }
 
     public static function getNavigationBadge(): ?string
     {
-        return static::getModel()::where('status', 'pending')
-            ->where('followupable_type', Patient::class)
-            ->count();
+        return static::getModel()::where('status', 'pending')->count();
+        // ✅ REMOVIDO: ->where('followupable_type', Patient::class)
+        // Ahora cuenta seguimientos pendientes de todos los tipos
     }
 
     public static function getNavigationBadgeColor(): ?string
     {
-        $pendingCount = static::getModel()::where('status', 'pending')
-            ->where('followupable_type', Patient::class)
-            ->count();
+        $pendingCount = static::getModel()::where('status', 'pending')->count();
 
         if ($pendingCount > 10) return 'danger';
         if ($pendingCount > 5) return 'warning';

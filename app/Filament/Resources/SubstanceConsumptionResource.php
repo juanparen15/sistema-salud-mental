@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\SubstanceConsumptionResource\Pages;
 use App\Models\SubstanceConsumption;
 use Filament\Forms;
+use Filament\Forms\Components\Builder;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
@@ -227,9 +228,15 @@ class SubstanceConsumptionResource extends Resource
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\Action::make('add_followup')
-                    ->label('Seguimiento')
-                    ->icon('heroicon-o-clipboard-document-check')
-                    ->color('success'),
+                    ->label('Añadir Seguimiento')
+                    ->icon('heroicon-o-plus-circle')
+                    ->color('success')
+                    ->url(fn($record) => route('filament.admin.resources.monthly-followups.create', [
+                        'patient_id' => $record->patient_id,
+                        'source_type' => 'substance_consumption',
+                        'source_id' => $record->id
+                    ])),
+
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -254,7 +261,7 @@ class SubstanceConsumptionResource extends Resource
         return static::getModel()::where('status', 'active')->count();
     }
 
-        public static function getNavigationBadgeColor(): ?string
+    public static function getNavigationBadgeColor(): ?string
     {
         return 'danger';
     }

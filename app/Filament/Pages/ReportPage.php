@@ -8,6 +8,7 @@ use App\Models\Patient;
 use App\Models\MentalDisorder;
 use App\Models\SuicideAttempt;
 use App\Models\SubstanceConsumption;
+use Exception;
 use Filament\Pages\Page;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -182,7 +183,7 @@ class ReportPage extends Page
                         ->openUrlInNewTab(),
                 ])
                 ->send();
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Notification::make()
                 ->title('Error al generar reporte')
                 ->danger()
@@ -210,7 +211,7 @@ class ReportPage extends Page
                 ->body($preview)
                 ->duration(10000)
                 ->send();
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Notification::make()
                 ->title('Error en vista previa')
                 ->danger()
@@ -241,7 +242,7 @@ class ReportPage extends Page
                 ->body($message)
                 ->duration(12000)
                 ->send();
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Notification::make()
                 ->title('Error al obtener estadísticas')
                 ->danger()

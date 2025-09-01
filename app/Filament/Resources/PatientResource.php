@@ -531,15 +531,27 @@ class PatientResource extends Resource
 
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                Tables\Actions\ViewAction::make()
+                    ->visible(fn() => auth()->user()->can('view_patients')),
+                Tables\Actions\EditAction::make()
+                    ->visible(fn() => auth()->user()->can('edit_patients')),
+                Tables\Actions\DeleteAction::make()
+                    ->visible(fn() => auth()->user()->can('delete_patients')),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\DeleteBulkAction::make()
+                        ->visible(fn() => auth()->user()->can('delete_patients')),
+                    Tables\Actions\ExportBulkAction::make()
+                        ->visible(fn() => auth()->user()->can('export_patients')),
                 ]),
             ])
+            // ->headerActions([
+            //     Tables\Actions\ImportAction::make()
+            //         ->visible(fn() => auth()->user()->can('import_patients')),
+            //     Tables\Actions\ExportAction::make()
+            //         ->visible(fn() => auth()->user()->can('export_patients')),
+            // ])
             ->defaultSort('created_at', 'desc')
             ->striped()
             ->paginated([10, 25, 50, 100]);
@@ -554,13 +566,37 @@ class PatientResource extends Resource
         ];
     }
 
+    // public static function getEloquentQuery(): Builder
+    // {
+    //     return parent::getEloquentQuery()->with(['monthlyFollowups']);
+    // }
+
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery()->with(['monthlyFollowups']);
+        $query = parent::getEloquentQuery();
+
+        // Si solo puede ver algunos pacientes (no todos), aplicar filtros
+        if (!auth()->user()->can('view_any_patients')) {
+            // Ejemplo: solo puede ver pacientes asignados a él
+            $query->where('assigned_to', auth()->id());
+        }
+
+        return $query;
     }
 
     public static function getNavigationBadge(): ?string
     {
         return static::getModel()::count();
+    }
+
+    public static function canViewAny(): bool
+    {
+        return auth()->user()->can('view_patients') ||
+            auth()->user()->can('view_any_patients');
+    }
+
+    public static function canCreate(): bool
+    {
+        return auth()->user()->can('create_patients');
     }
 }

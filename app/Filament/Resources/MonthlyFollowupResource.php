@@ -500,14 +500,28 @@ class MonthlyFollowupResource extends Resource
                     ),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                Tables\Actions\ViewAction::make()
+                    ->visible(fn() => auth()->user()->can('view_followups')),
+                Tables\Actions\EditAction::make()
+                    ->visible(
+                        fn($record) =>
+                        auth()->user()->can('edit_all_followups') ||
+                            (auth()->user()->can('edit_followups') && $record->created_by_id === auth()->id())
+                    ),
+                Tables\Actions\DeleteAction::make()
+                    ->visible(fn() => auth()->user()->can('delete_followups')),
             ])
             ->bulkActions([
-                BulkActionGroup::make([
-                    DeleteBulkAction::make(),
+                Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\DeleteBulkAction::make()
+                        ->visible(fn() => auth()->user()->can('delete_followups')),
+                    Tables\Actions\ExportBulkAction::make()
+                        ->visible(fn() => auth()->user()->can('export_followups')),
                 ]),
+            ])
+            ->headerActions([
+                Tables\Actions\ExportAction::make()
+                    ->visible(fn() => auth()->user()->can('export_followups')),
             ])
             ->defaultSort('followup_date', 'desc')
             ->striped()
@@ -523,17 +537,17 @@ class MonthlyFollowupResource extends Resource
         ];
     }
 
-    public static function getEloquentQuery(): Builder
-    {
-        return parent::getEloquentQuery()
-            ->withoutGlobalScopes([SoftDeletingScope::class])
-            ->with([
-                'followupable.patient', // Cargar tanto el caso como su paciente
-                'user'
-            ]);
-        // ✅ REMOVIDO: ->where('followupable_type', Patient::class)
-        // Ahora mostrará seguimientos de todos los tipos de casos
-    }
+    // public static function getEloquentQuery(): Builder
+    // {
+    //     return parent::getEloquentQuery()
+    //         ->withoutGlobalScopes([SoftDeletingScope::class])
+    //         ->with([
+    //             'followupable.patient', // Cargar tanto el caso como su paciente
+    //             'user'
+    //         ]);
+    //     // ✅ REMOVIDO: ->where('followupable_type', Patient::class)
+    //     // Ahora mostrará seguimientos de todos los tipos de casos
+    // }
 
     public static function getNavigationBadge(): ?string
     {
@@ -549,5 +563,37 @@ class MonthlyFollowupResource extends Resource
         if ($pendingCount > 10) return 'danger';
         if ($pendingCount > 5) return 'warning';
         return 'primary';
+    }
+
+    public static function canViewAny(): bool
+    {
+        return auth()->user()->can('view_followups') ||
+            auth()->user()->can('view_any_followups');
+    }
+
+    public static function canCreate(): bool
+    {
+        return auth()->user()->can('create_followups');
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+
+        // Control de acceso basado en permisos
+        if (auth()->user()->can('view_all_followups')) {
+            // Puede ver todos los seguimientos
+            return $query;
+        } elseif (auth()->user()->can('view_any_followups')) {
+            // Puede ver seguimientos relacionados con sus pacientes
+            $query->whereHas('patient', function ($q) {
+                $q->where('assigned_to', auth()->id());
+            });
+        } else {
+            // Solo puede ver seguimientos creados por él
+            $query->where('created_by_id', auth()->id());
+        }
+
+        return $query;
     }
 }

@@ -10,6 +10,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Auth;
 
 class SuicideAttemptResource extends Resource
 {
@@ -291,4 +292,6 @@ class SuicideAttemptResource extends Resource
     {
         return 'danger';
     }
+
+
 }

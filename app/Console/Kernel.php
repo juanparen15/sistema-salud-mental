@@ -73,7 +73,7 @@ class Kernel extends ConsoleKernel
     //     \App\Console\Commands\ImportPatientsCommand::class,
     // ];
 
-    protected $commands = [
-        \App\Console\Commands\ImportMentalHealthData::class,
-    ];
+    // protected $commands = [
+    //     \App\Console\Commands\ImportMentalHealthData::class,
+    // ];
 }

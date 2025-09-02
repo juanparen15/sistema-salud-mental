@@ -5,11 +5,11 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\SubstanceConsumptionResource\Pages;
 use App\Models\SubstanceConsumption;
 use Filament\Forms;
-use Filament\Forms\Components\Builder;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class SubstanceConsumptionResource extends Resource
 {
@@ -225,8 +225,12 @@ class SubstanceConsumptionResource extends Resource
                     }),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\ViewAction::make()
+                    ->visible(fn() => auth()->user()->can('view_patients')),
+                Tables\Actions\EditAction::make()
+                    ->visible(fn() => auth()->user()->can('edit_patients')),
+                Tables\Actions\DeleteAction::make()
+                    ->visible(fn() => auth()->user()->can('delete_patients')),
                 Tables\Actions\Action::make('add_followup')
                     ->label('Añadir Seguimiento')
                     ->icon('heroicon-o-plus-circle')
@@ -235,15 +239,40 @@ class SubstanceConsumptionResource extends Resource
                         'patient_id' => $record->patient_id,
                         'source_type' => 'substance_consumption',
                         'source_id' => $record->id
-                    ])),
-
+                    ]))
+                    ->visible(fn() => auth()->user()->can('create_followups')),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\DeleteBulkAction::make()
+                        ->visible(fn() => auth()->user()->can('delete_patients')),
+                    Tables\Actions\ExportBulkAction::make()
+                        ->visible(fn() => auth()->user()->can('export_patients')),
                 ]),
             ])
+            ->headerActions([
+                Tables\Actions\ImportAction::make()
+                    ->visible(fn() => auth()->user()->can('import_patients')),
+                Tables\Actions\ExportAction::make()
+                    ->visible(fn() => auth()->user()->can('export_patients')),
+            ])
             ->defaultSort('admission_date', 'desc');
+    }
+
+    // ✅ Filtrar registros según permisos
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+
+        // Si no puede ver todos los pacientes, aplicar filtros
+        if (!auth()->user()->can('view_any_patients')) {
+            // Solo puede ver casos relacionados con sus pacientes asignados
+            $query->whereHas('patient', function ($q) {
+                $q->where('assigned_to', auth()->id());
+            });
+        }
+
+        return $query;
     }
 
     public static function getPages(): array
@@ -252,7 +281,6 @@ class SubstanceConsumptionResource extends Resource
             'index' => Pages\ListSubstanceConsumptions::route('/'),
             'create' => Pages\CreateSubstanceConsumption::route('/create'),
             'edit' => Pages\EditSubstanceConsumption::route('/{record}/edit'),
-            // 'view' => Pages\ViewSubstanceConsumption::route('/{record}'),
         ];
     }
 
@@ -264,5 +292,26 @@ class SubstanceConsumptionResource extends Resource
     public static function getNavigationBadgeColor(): ?string
     {
         return 'danger';
+    }
+
+    public static function canViewAny(): bool
+    {
+        if (!auth()->check()) return false;
+
+        // Solo roles especializados pueden ver consumo SPA
+        return auth()->user()->hasAnyRole(['super_admin', 'admin', 'coordinator', 'psychologist', 'social_worker']);
+    }
+
+    public static function canCreate(): bool
+    {
+        if (!auth()->check()) return false;
+
+        // Assistant NO puede registrar casos de SPA
+        return auth()->user()->hasAnyRole(['super_admin', 'admin', 'coordinator', 'psychologist', 'social_worker']);
+    }
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return self::canViewAny();
     }
 }

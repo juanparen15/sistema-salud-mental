@@ -21,6 +21,8 @@ class SubstanceConsumption extends Model
         'additional_observation',
         'status',
         'created_by',
+        // 'created_by_id',
+        // 'assigned_to',
     ];
 
     protected $casts = [
@@ -42,4 +44,14 @@ class SubstanceConsumption extends Model
     {
         return $this->morphMany(MonthlyFollowup::class, 'followupable');
     }
+
+    // public function createdBy()
+    // {
+    //     return $this->belongsTo(User::class, 'created_by_id');
+    // }
+
+    // public function assignedTo()
+    // {
+    //     return $this->belongsTo(User::class, 'assigned_to');
+    // }
 }

@@ -69,11 +69,17 @@ class Kernel extends ConsoleKernel
         require base_path('routes/console.php');
     }
 
-    // protected $commands = [
-    //     \App\Console\Commands\ImportPatientsCommand::class,
-    // ];
+    protected $commands = [
+        // \App\Console\Commands\ImportPatientsCommand::class,
+        Commands\SendDailyAlerts::class,
+    ];
 
     // protected $commands = [
     //     \App\Console\Commands\ImportMentalHealthData::class,
     // ];
+
+    protected $middlewareAliases = [
+        // ...otros middlewares
+        'filament.permissions' => \App\Http\Middleware\CheckFilamentPermissions::class,
+    ];
 }

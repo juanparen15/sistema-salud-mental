@@ -1,52 +1,47 @@
 <?php
 
+// app/Policies/MentalDisorderPolicy.php
 namespace App\Policies;
 
-use App\Models\MentalDisorder;
 use App\Models\User;
-use Illuminate\Auth\Access\HandlesAuthorization;
+use App\Models\MentalDisorder;
 
 class MentalDisorderPolicy
 {
-    use HandlesAuthorization;
-    
-    // public function before(User $user, $ability): ?bool
-    // {
-    //     if ($user->hasRole('admin')) {
-    //         return true;
-    //     }
-        
-    //     return null;
-    // }
-    
-    // public function viewAny(User $user): bool
-    // {
-    //     return $user->hasPermission('view_mental_disorders');
-    // }
-    
-    // public function view(User $user, MentalDisorder $mentalDisorder): bool
-    // {
-    //     return $user->hasPermission('view_mental_disorders');
-    // }
-    
-    // public function create(User $user): bool
-    // {
-    //     return $user->hasPermission('create_mental_disorders');
-    // }
-    
-    // public function update(User $user, MentalDisorder $mentalDisorder): bool
-    // {
-    //     // Solo puede editar si tiene permiso y es el creador o es coordinador
-    //     if (!$user->hasPermission('edit_mental_disorders')) {
-    //         return false;
-    //     }
-        
-    //     return $user->hasRole('coordinator') || $mentalDisorder->created_by === $user->id;
-    // }
-    
-    // public function delete(User $user, MentalDisorder $mentalDisorder): bool
-    // {
-    //     return $user->hasPermission('delete_mental_disorders') && 
-    //            $user->hasRole('coordinator');
-    // }
+    public function viewAny(User $user): bool
+    {
+        return $user->can('view_patients') || $user->can('view_any_patients');
+    }
+
+    public function view(User $user, MentalDisorder $disorder): bool
+    {
+        if ($user->can('view_any_patients')) {
+            return true;
+        }
+
+        return $disorder->patient->assigned_to === $user->id;
+    }
+
+    public function create(User $user): bool
+    {
+        return $user->can('create_patients') && !$user->hasRole('assistant');
+    }
+
+    public function update(User $user, MentalDisorder $disorder): bool
+    {
+        if (!$user->can('edit_patients') || $user->hasRole('assistant')) {
+            return false;
+        }
+
+        if (!$user->can('view_any_patients')) {
+            return $disorder->patient->assigned_to === $user->id;
+        }
+
+        return true;
+    }
+
+    public function delete(User $user, MentalDisorder $disorder): bool
+    {
+        return $user->can('delete_patients');
+    }
 }

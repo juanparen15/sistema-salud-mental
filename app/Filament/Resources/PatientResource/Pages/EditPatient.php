@@ -10,10 +10,19 @@ class EditPatient extends EditRecord
 {
     protected static string $resource = PatientResource::class;
 
+    public function mount(int|string $record): void
+    {
+        abort_unless(auth()->user()->can('edit_patients'), 403);
+        parent::mount($record);
+    }
+
     protected function getHeaderActions(): array
     {
         return [
-            Actions\DeleteAction::make(),
+            Actions\ViewAction::make()
+                ->visible(fn () => auth()->user()->can('view_patients')),
+            Actions\DeleteAction::make()
+                ->visible(fn () => auth()->user()->can('delete_patients')),
         ];
     }
 }

@@ -591,12 +591,21 @@ class PatientResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return auth()->user()->can('view_patients') ||
-            auth()->user()->can('view_any_patients');
+        return auth()->user()?->can('view_patients') || auth()->user()?->can('view_any_patients');
     }
+
 
     public static function canCreate(): bool
     {
-        return auth()->user()->can('create_patients');
+        return auth()->user()?->can('create_patients');
+    }
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        if (!auth()->check()) {
+            return false;
+        }
+
+        return auth()->user()->can('view_patients') || auth()->user()->can('view_any_patients');
     }
 }

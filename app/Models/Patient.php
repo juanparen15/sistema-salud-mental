@@ -102,7 +102,7 @@ class Patient extends Model
 
     protected $fillable = [
         'document_number',
-        'document_type', 
+        'document_type',
         'full_name',
         'gender',
         'birth_date',
@@ -113,6 +113,8 @@ class Patient extends Model
         'eps_code',
         'eps_name',
         'status',
+        'created_by_id',
+        'assigned_to',
     ];
 
     protected $casts = [
@@ -133,7 +135,7 @@ class Patient extends Model
     public function followups(): HasMany
     {
         return $this->hasMany(MonthlyFollowup::class, 'followupable_id')
-                    ->where('followupable_type', self::class);
+            ->where('followupable_type', self::class);
     }
 
     /**
@@ -158,8 +160,8 @@ class Patient extends Model
     public function hasRecentFollowup(int $days = 30): bool
     {
         return $this->monthlyFollowups()
-                   ->where('followup_date', '>=', now()->subDays($days))
-                   ->exists();
+            ->where('followup_date', '>=', now()->subDays($days))
+            ->exists();
     }
 
     /**
@@ -168,9 +170,9 @@ class Patient extends Model
     public function getFollowupsByYear(int $year)
     {
         return $this->monthlyFollowups()
-                   ->where('year', $year)
-                   ->orderBy('month')
-                   ->get();
+            ->where('year', $year)
+            ->orderBy('month')
+            ->get();
     }
 
     /**
@@ -195,7 +197,7 @@ class Patient extends Model
     public function scopeSearch($query, $search)
     {
         return $query->where('full_name', 'like', "%{$search}%")
-                    ->orWhere('document_number', 'like', "%{$search}%");
+            ->orWhere('document_number', 'like', "%{$search}%");
     }
 
     /**
@@ -206,5 +208,15 @@ class Patient extends Model
         return $query->whereHas('monthlyFollowups', function ($q) use ($days) {
             $q->where('followup_date', '>=', now()->subDays($days));
         });
+    }
+
+    public function createdBy()
+    {
+        return $this->belongsTo(User::class, 'created_by_id');
+    }
+
+    public function assignedTo()
+    {
+        return $this->belongsTo(User::class, 'assigned_to');
     }
 }

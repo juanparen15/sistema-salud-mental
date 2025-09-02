@@ -1,97 +1,72 @@
 <?php
 
+// app/Policies/MonthlyFollowupPolicy.php
 namespace App\Policies;
 
-use App\Models\MonthlyFollowup;
 use App\Models\User;
-use Illuminate\Auth\Access\Response;
+use App\Models\MonthlyFollowup;
 
 class MonthlyFollowupPolicy
 {
-    /**
-     * Determine whether the user can view any models.
-     */
     public function viewAny(User $user): bool
     {
-        return $user->hasPermissionTo('view_followups') || 
-               $user->hasRole(['admin', 'coordinator', 'psychologist']);
+        return $user->can('view_followups') ||
+            $user->can('view_any_followups') ||
+            $user->can('view_all_followups');
     }
 
-    /**
-     * Determine whether the user can view the model.
-     */
-    public function view(User $user, MonthlyFollowup $monthlyFollowup): bool
+    public function view(User $user, MonthlyFollowup $followup): bool
     {
-        // Los usuarios pueden ver sus propios seguimientos o tener permisos específicos
-        return $monthlyFollowup->user_id === $user->id ||
-               $user->hasPermissionTo('view_all_followups') ||
-               $user->hasRole(['admin', 'coordinator']);
+        // Puede ver todos los seguimientos
+        if ($user->can('view_all_followups')) {
+            return true;
+        }
+
+        // Puede ver seguimientos de sus pacientes asignados
+        if ($user->can('view_any_followups')) {
+            return $this->belongsToAssignedPatient($user, $followup);
+        }
+
+        // Solo puede ver seguimientos creados por él
+        return $followup->performed_by === $user->id;
     }
 
-    /**
-     * Determine whether the user can create models.
-     */
     public function create(User $user): bool
     {
-        return $user->hasPermissionTo('create_followups') || 
-               $user->hasRole(['admin', 'coordinator', 'psychologist']);
+        return $user->can('create_followups');
     }
 
-    /**
-     * Determine whether the user can update the model.
-     */
-    public function update(User $user, MonthlyFollowup $monthlyFollowup): bool
+    public function update(User $user, MonthlyFollowup $followup): bool
     {
-        // Los usuarios pueden editar sus propios seguimientos recientes o tener permisos
-        $isOwner = $monthlyFollowup->user_id === $user->id;
-        $isRecent = $monthlyFollowup->created_at >= now()->subDays(7); // 7 días para editar
-        
-        return ($isOwner && $isRecent) ||
-               $user->hasPermissionTo('edit_all_followups') ||
-               $user->hasRole(['admin', 'coordinator']);
+        // Puede editar todos los seguimientos
+        if ($user->can('edit_all_followups')) {
+            return true;
+        }
+
+        // Solo puede editar seguimientos creados por él
+        if ($user->can('edit_followups')) {
+            return $followup->performed_by === $user->id;
+        }
+
+        return false;
     }
 
-    /**
-     * Determine whether the user can delete the model.
-     */
-    public function delete(User $user, MonthlyFollowup $monthlyFollowup): bool
+    public function delete(User $user, MonthlyFollowup $followup): bool
     {
-        // Solo admins y coordinadores pueden eliminar seguimientos
-        return $user->hasPermissionTo('delete_followups') || 
-               $user->hasRole(['admin', 'coordinator']);
+        return $user->can('delete_followups');
     }
 
-    /**
-     * Determine whether the user can restore the model.
-     */
-    public function restore(User $user, MonthlyFollowup $monthlyFollowup): bool
-    {
-        return $user->hasRole(['admin']);
-    }
-
-    /**
-     * Determine whether the user can permanently delete the model.
-     */
-    public function forceDelete(User $user, MonthlyFollowup $monthlyFollowup): bool
-    {
-        return $user->hasRole(['admin']);
-    }
-
-    /**
-     * Determine whether the user can view sensitive information.
-     */
-    public function viewSensitiveInfo(User $user): bool
-    {
-        return $user->hasPermissionTo('view_sensitive_info') ||
-               $user->hasRole(['admin', 'coordinator', 'psychologist']);
-    }
-
-    /**
-     * Determine whether the user can export followups.
-     */
     public function export(User $user): bool
     {
-        return $user->hasPermissionTo('export_followups') || 
-               $user->hasRole(['admin', 'coordinator']);
+        return $user->can('export_followups');
+    }
+
+    private function belongsToAssignedPatient(User $user, MonthlyFollowup $followup): bool
+    {
+        if (!$followup->followupable || !$followup->followupable->patient) {
+            return false;
+        }
+
+        return $followup->followupable->patient->assigned_to === $user->id;
     }
 }

@@ -1,5 +1,6 @@
 <?php
 
+// StatsOverviewWidget.php - Con Permisos
 namespace App\Filament\Widgets;
 
 use App\Models\Patient;
@@ -13,8 +14,24 @@ class StatsOverviewWidget extends BaseWidget
 {
     protected static ?int $sort = 1;
 
+    // ✅ Control de acceso al widget
+    public static function canView(): bool
+    {
+        return auth()->user()->can('view_dashboard') && 
+               auth()->user()->can('view_analytics');
+    }
+
     protected function getStats(): array
     {
+        // ✅ Solo mostrar estadísticas si tiene permisos
+        if (!auth()->user()->can('view_patients')) {
+            return [
+                Stat::make('Acceso Restringido', '---')
+                    ->description('No tienes permisos para ver estas estadísticas')
+                    ->color('danger'),
+            ];
+        }
+
         $totalPatients = Patient::count();
         $mentalDisorders = MentalDisorder::where('status', 'active')->count();
         $suicideAttempts = SuicideAttempt::where('status', 'active')->count();

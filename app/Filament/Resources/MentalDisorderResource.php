@@ -10,6 +10,7 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class MentalDisorderResource extends Resource
 {
@@ -215,16 +216,12 @@ class MentalDisorderResource extends Resource
                     ]),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make(),
-                // Tables\Actions\Action::make('add_followup')
-                //     ->label('Añadir Seguimiento')
-                //     ->icon('heroicon-o-plus-circle')
-                //     ->color('success')
-                //     ->url(fn($record) => route('filament.admin.resources.monthly-followups.create', [
-                //         'type' => 'mental_disorder',
-                //         'id' => $record->id
-                //     ])),
+                Tables\Actions\ViewAction::make()
+                    ->visible(fn() => auth()->user()->can('view_patients')),
+                Tables\Actions\EditAction::make()
+                    ->visible(fn() => auth()->user()->can('edit_patients')),
+                Tables\Actions\DeleteAction::make()
+                    ->visible(fn() => auth()->user()->can('delete_patients')),
                 Tables\Actions\Action::make('add_followup')
                     ->label('Añadir Seguimiento')
                     ->icon('heroicon-o-plus-circle')
@@ -233,13 +230,39 @@ class MentalDisorderResource extends Resource
                         'patient_id' => $record->patient_id,
                         'source_type' => 'mental_disorder',
                         'source_id' => $record->id
-                    ])),
+                    ]))
+                    ->visible(fn() => auth()->user()->can('create_followups')),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\DeleteBulkAction::make()
+                        ->visible(fn() => auth()->user()->can('delete_patients')),
+                    Tables\Actions\ExportBulkAction::make()
+                        ->visible(fn() => auth()->user()->can('export_patients')),
                 ]),
+            ])
+            ->headerActions([
+                Tables\Actions\ImportAction::make()
+                    ->visible(fn() => auth()->user()->can('import_patients')),
+                Tables\Actions\ExportAction::make()
+                    ->visible(fn() => auth()->user()->can('export_patients')),
             ]);
+    }
+
+    // ✅ Filtrar registros según permisos
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+
+        // Si no puede ver todos los pacientes, aplicar filtros
+        if (!auth()->user()->can('view_any_patients')) {
+            // Solo puede ver casos relacionados con sus pacientes asignados
+            $query->whereHas('patient', function ($q) {
+                $q->where('assigned_to', auth()->id());
+            });
+        }
+
+        return $query;
     }
 
     public static function getPages(): array
@@ -248,7 +271,6 @@ class MentalDisorderResource extends Resource
             'index' => Pages\ListMentalDisorders::route('/'),
             'create' => Pages\CreateMentalDisorder::route('/create'),
             'edit' => Pages\EditMentalDisorder::route('/{record}/edit'),
-            // 'view' => Pages\ViewMentalDisorder::route('/{record}'),
         ];
     }
 
@@ -260,5 +282,26 @@ class MentalDisorderResource extends Resource
     public static function getNavigationBadgeColor(): ?string
     {
         return 'danger';
+    }
+
+    public static function canViewAny(): bool
+    {
+        if (!auth()->check()) return false;
+
+        // Solo estos roles pueden ver trastornos mentales
+        return auth()->user()->hasAnyRole(['super_admin', 'admin', 'coordinator', 'psychologist', 'social_worker']);
+    }
+
+    public static function canCreate(): bool
+    {
+        if (!auth()->check()) return false;
+
+        // Assistant NO puede crear casos especializados
+        return auth()->user()->hasAnyRole(['super_admin', 'admin', 'coordinator', 'psychologist', 'social_worker']);
+    }
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return self::canViewAny();
     }
 }

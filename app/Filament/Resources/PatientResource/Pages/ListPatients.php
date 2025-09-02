@@ -26,12 +26,14 @@ class ListPatients extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make(),
+            Actions\CreateAction::make()
+                ->visible(fn() => auth()->user()->can('create_patients')),
 
             Actions\Action::make('importMentalHealth')
                 ->label('Importar Sistema Salud Mental')
                 ->icon('heroicon-o-arrow-up-tray')
                 ->color('success')
+                ->visible(fn() => auth()->user()->can('import_patients'))
                 ->form([
                     Section::make('Archivo del Sistema de Salud Mental')
                         ->description('Sube tu archivo "SISTEMA DE INFORMACIÓN SALUD MENTAL 2025.xlsx" con las hojas requeridas')
@@ -149,7 +151,6 @@ class ListPatients extends ListRecords
 
                             $successMessage = $this->buildMentalHealthSuccessMessage($import);
                             $errors = $import->getErrors();
-
                         } else {
                             // Procesamiento genérico
                             $import = new PatientsImport();
@@ -178,7 +179,6 @@ class ListPatients extends ListRecords
                         if (!empty($errors)) {
                             $this->showImportWarnings($errors);
                         }
-
                     } catch (Exception $e) {
                         DB::rollBack();
 
@@ -256,13 +256,13 @@ class ListPatients extends ListRecords
 
         $message = "<div class='space-y-2'>";
         $message .= "<div class='font-semibold mb-3'>Resumen de Procesamiento:</div>";
-        
+
         // Pacientes
         $message .= "<div class='grid grid-cols-2 gap-2 text-sm'>";
         $message .= "<div><span class='font-medium'>Pacientes nuevos:</span> <strong class='text-green-600'>{$newPatients}</strong></div>";
         $message .= "<div><span class='font-medium'>Pacientes actualizados:</span> <strong class='text-blue-600'>{$updatedPatients}</strong></div>";
         $message .= "</div>";
-        
+
         // Casos y seguimientos
         $message .= "<div class='grid grid-cols-2 gap-2 text-sm mt-2'>";
         $message .= "<div><span class='font-medium'>Casos creados:</span> <strong class='text-purple-600'>{$totalCases}</strong></div>";
@@ -293,11 +293,11 @@ class ListPatients extends ListRecords
         $message = "<div class='space-y-2'>";
         $message .= "<div><strong>{$imported}</strong> pacientes nuevos creados</div>";
         $message .= "<div><strong>{$updated}</strong> pacientes actualizados</div>";
-        
+
         if ($skipped > 0) {
             $message .= "<div><strong>{$skipped}</strong> registros omitidos</div>";
         }
-        
+
         $message .= "</div>";
 
         return $message;
@@ -310,18 +310,18 @@ class ListPatients extends ListRecords
     {
         $errorCount = count($errors);
         $displayErrors = array_slice($errors, 0, 8);
-        
+
         $errorMessage = "<div class='space-y-1 text-sm'>";
         $errorMessage .= "<div class='font-medium'>Se encontraron {$errorCount} advertencias:</div>";
-        
+
         foreach ($displayErrors as $error) {
             $errorMessage .= "<div class='text-xs'>• " . htmlspecialchars($error) . "</div>";
         }
-        
+
         if ($errorCount > 8) {
             $errorMessage .= "<div class='text-xs text-gray-600 mt-2'>... y " . ($errorCount - 8) . " advertencias más</div>";
         }
-        
+
         $errorMessage .= "</div>";
 
         Notification::make()
@@ -340,11 +340,11 @@ class ListPatients extends ListRecords
         $message = "<div class='space-y-2'>";
         $message .= "<div class='font-medium text-red-800'>Detalles del Error:</div>";
         $message .= "<div class='text-sm'>" . htmlspecialchars($e->getMessage()) . "</div>";
-        
+
         if (method_exists($e, 'getFile') && $e->getFile()) {
             $message .= "<div class='text-xs text-gray-600 mt-2'>Archivo: " . basename($e->getFile()) . " línea " . $e->getLine() . "</div>";
         }
-        
+
         $message .= "<div class='mt-3 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-700'>";
         $message .= "<strong>Sugerencias:</strong><br>";
         $message .= "• Verifica que el archivo tenga las hojas correctas<br>";
@@ -390,7 +390,6 @@ class ListPatients extends ListRecords
                 ->info()
                 ->duration(12000)
                 ->send();
-
         } catch (Exception $e) {
             Notification::make()
                 ->title('Error al obtener estadísticas')

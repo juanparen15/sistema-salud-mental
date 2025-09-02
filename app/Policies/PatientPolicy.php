@@ -1,89 +1,69 @@
 <?php
 
+// ================================
+// POLÍTICAS DE ACCESO (POLICIES)
+// ================================
+
+// app/Policies/PatientPolicy.php
 namespace App\Policies;
 
-use App\Models\Patient;
 use App\Models\User;
-use Illuminate\Auth\Access\Response;
+use App\Models\Patient;
 
 class PatientPolicy
 {
-    /**
-     * Determine whether the user can view any models.
-     */
     public function viewAny(User $user): bool
     {
-        return $user->hasPermissionTo('view_patients') || 
-               $user->hasRole(['admin', 'coordinator', 'psychologist']);
+        return $user->can('view_patients') || $user->can('view_any_patients');
     }
 
-    /**
-     * Determine whether the user can view the model.
-     */
     public function view(User $user, Patient $patient): bool
     {
-        return $user->hasPermissionTo('view_patients') || 
-               $user->hasRole(['admin', 'coordinator', 'psychologist']);
+        // Super admin y admin pueden ver todo
+        if ($user->can('view_any_patients')) {
+            return true;
+        }
+
+        // Solo puede ver pacientes asignados a él
+        return $patient->assigned_to === $user->id;
     }
 
-    /**
-     * Determine whether the user can create models.
-     */
     public function create(User $user): bool
     {
-        return $user->hasPermissionTo('create_patients') || 
-               $user->hasRole(['admin', 'coordinator', 'psychologist']);
+        return $user->can('create_patients');
     }
 
-    /**
-     * Determine whether the user can update the model.
-     */
     public function update(User $user, Patient $patient): bool
     {
-        return $user->hasPermissionTo('edit_patients') || 
-               $user->hasRole(['admin', 'coordinator']);
+        if (!$user->can('edit_patients')) {
+            return false;
+        }
+
+        // Assistant no puede editar pacientes
+        if ($user->hasRole('assistant')) {
+            return false;
+        }
+
+        // Si no puede ver todos los pacientes, solo puede editar los asignados a él
+        if (!$user->can('view_any_patients')) {
+            return $patient->assigned_to === $user->id;
+        }
+
+        return true;
     }
 
-    /**
-     * Determine whether the user can delete the model.
-     */
     public function delete(User $user, Patient $patient): bool
     {
-        return $user->hasPermissionTo('delete_patients') || 
-               $user->hasRole(['admin']);
+        return $user->can('delete_patients');
     }
 
-    /**
-     * Determine whether the user can restore the model.
-     */
-    public function restore(User $user, Patient $patient): bool
-    {
-        return $user->hasRole(['admin']);
-    }
-
-    /**
-     * Determine whether the user can permanently delete the model.
-     */
-    public function forceDelete(User $user, Patient $patient): bool
-    {
-        return $user->hasRole(['admin']);
-    }
-
-    /**
-     * Determine whether the user can export patients.
-     */
     public function export(User $user): bool
     {
-        return $user->hasPermissionTo('export_patients') || 
-               $user->hasRole(['admin', 'coordinator']);
+        return $user->can('export_patients');
     }
 
-    /**
-     * Determine whether the user can import patients.
-     */
     public function import(User $user): bool
     {
-        return $user->hasPermissionTo('import_patients') || 
-               $user->hasRole(['admin', 'coordinator']);
+        return $user->can('import_patients');
     }
 }

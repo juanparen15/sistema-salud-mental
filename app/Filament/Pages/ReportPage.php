@@ -31,6 +31,8 @@ class ReportPage extends Page
 
     public function mount(): void
     {
+        // ✅ Verificar permisos antes de montar
+        abort_unless(auth()->user()->can('view_reports'), 403);
         $this->form->fill();
     }
 
@@ -135,24 +137,30 @@ class ReportPage extends Page
                 ->label('Generar Reporte')
                 ->icon('heroicon-o-document-arrow-down')
                 ->action('generateReport')
-                ->color('success'),
+                ->color('success')
+                ->visible(fn() => auth()->user()->can('generate_reports')), // ✅ Control de permisos
 
             Action::make('preview')
                 ->label('Vista Previa')
                 ->icon('heroicon-o-eye')
                 ->action('previewReport')
-                ->color('info'),
+                ->color('info')
+                ->visible(fn() => auth()->user()->can('view_reports')), // ✅ Control de permisos
 
             Action::make('quick_stats')
                 ->label('Estadísticas Rápidas')
                 ->icon('heroicon-o-chart-bar')
                 ->action('showQuickStats')
-                ->color('primary'),
+                ->color('primary')
+                ->visible(fn() => auth()->user()->can('view_analytics')), // ✅ Control de permisos
         ];
     }
 
     public function generateReport(): void
     {
+        // ✅ Verificar permisos antes de generar
+        abort_unless(auth()->user()->can('generate_reports'), 403);
+
         $data = $this->form->getState();
 
         try {
@@ -180,7 +188,8 @@ class ReportPage extends Page
                     \Filament\Notifications\Actions\Action::make('download')
                         ->label('Descargar')
                         ->url(Storage::url($fileName))
-                        ->openUrlInNewTab(),
+                        ->openUrlInNewTab()
+                        ->visible(fn() => auth()->user()->can('export_reports')), // ✅ Control de permisos
                 ])
                 ->send();
         } catch (Exception $e) {
@@ -195,6 +204,9 @@ class ReportPage extends Page
 
     public function previewReport(): void
     {
+        // ✅ Verificar permisos
+        abort_unless(auth()->user()->can('view_reports'), 403);
+
         $data = $this->form->getState();
 
         try {
@@ -222,6 +234,9 @@ class ReportPage extends Page
 
     public function showQuickStats(): void
     {
+        // ✅ Verificar permisos
+        abort_unless(auth()->user()->can('view_analytics'), 403);
+
         try {
             $stats = $this->getQuickStatistics();
 
@@ -262,5 +277,19 @@ class ReportPage extends Page
             'pending_followups' => MonthlyFollowup::where('status', 'pending')->count(),
             'recent_followups' => MonthlyFollowup::where('followup_date', '>=', now()->subDays(30))->count(),
         ];
+    }
+
+    public static function canAccess(): bool
+    {
+        if (!auth()->check()) return false;
+
+        // Assistant NO puede ver reportes
+        return auth()->user()->hasAnyRole(['super_admin', 'admin', 'coordinator', 'psychologist', 'social_worker']) &&
+            auth()->user()->can('view_reports');
+    }
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return self::canAccess();
     }
 }

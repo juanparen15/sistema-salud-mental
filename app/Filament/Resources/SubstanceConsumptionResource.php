@@ -250,12 +250,12 @@ class SubstanceConsumptionResource extends Resource
                         ->visible(fn() => auth()->user()->can('export_patients')),
                 ]),
             ])
-            ->headerActions([
-                Tables\Actions\ImportAction::make()
-                    ->visible(fn() => auth()->user()->can('import_patients')),
-                Tables\Actions\ExportAction::make()
-                    ->visible(fn() => auth()->user()->can('export_patients')),
-            ])
+            // ->headerActions([
+            //     Tables\Actions\ImportAction::make()
+            //         ->visible(fn() => auth()->user()->can('import_patients')),
+            //     Tables\Actions\ExportAction::make()
+            //         ->visible(fn() => auth()->user()->can('export_patients')),
+            // ])
             ->defaultSort('admission_date', 'desc');
     }
 

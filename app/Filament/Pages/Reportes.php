@@ -16,14 +16,14 @@ use Filament\Notifications\Notification;
 use Filament\Actions\Action;
 use Illuminate\Support\Facades\Storage;
 
-class ReportPage extends Page
+class Reportes extends Page
 {
     protected static ?string $navigationIcon = 'heroicon-o-document-chart-bar';
     protected static ?string $navigationLabel = 'Reportes y Estadísticas';
     protected static ?int $navigationSort = 1;
-    protected static ?string $navigationGroup = 'Reportes';
-    protected static ?string $modelLabel = 'Reportes';
-    protected static ?string $pluralModelLabel = 'Reportes';
+    protected static ?string $navigationGroup = 'Reportes y Estadísticas';
+    protected static ?string $modelLabel = 'Reportes y Estadísticas';
+    protected static ?string $pluralModelLabel = 'Reportes y Estadísticas';
 
     protected static string $view = 'filament.pages.report-page';
 

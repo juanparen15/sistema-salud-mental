@@ -59,58 +59,11 @@ class AdminPanelProvider extends PanelProvider
             ->navigationGroups([
                 'Gestión de Casos',
                 'Seguimiento',
-                'Reportes',
+                'Reportes y Estadísticas',
                 'Configuración',
             ])
             ->authMiddleware([
                 Authenticate::class,
             ]);
-            // // ✅ GRUPOS DE NAVEGACIÓN ORGANIZADOS
-            // ->navigationGroups([
-            //     'Gestión de Pacientes' => [
-            //         'label' => 'Gestión de Pacientes',
-            //         'icon' => 'heroicon-o-user-group',
-            //         'collapsible' => true,
-            //         'collapsed' => false,
-            //     ],
-            //     'Gestión de Casos' => [
-            //         'label' => 'Gestión de Casos',
-            //         'icon' => 'heroicon-o-clipboard-document-list',
-            //         'collapsible' => true,
-            //         'collapsed' => false,
-            //     ],
-            //     'Reportes' => [
-            //         'label' => 'Reportes y Analytics',
-            //         'icon' => 'heroicon-o-chart-bar',
-            //         'collapsible' => true,
-            //         'collapsed' => false,
-            //     ],
-            //     'Administración' => [
-            //         'label' => 'Administración del Sistema',
-            //         'icon' => 'heroicon-o-cog-6-tooth',
-            //         'collapsible' => true,
-            //         'collapsed' => true,
-            //     ],
-            // ])
-            // ✅ CONFIGURACIONES AVANZADAS
-            // ->spa() 
-            // ->sidebarCollapsibleOnDesktop()
-            // ->globalSearchKeyBindings(['command+k', 'ctrl+k'])
-            // ->globalSearch()
-            // ->databaseNotifications()
-            // ->databaseNotificationsPolling('30s')
-            // // ✅ CONFIGURACIÓN DE PERFIL DE USUARIO
-            // ->userMenuItems([
-            //     'profile' => \Filament\Pages\Auth\EditProfile::class,
-            //     // 'logout' => \Filament\Http\Livewire\Auth\Logout::class,
-            // ])
-            // ✅ CONFIGURACIONES DE TEMA
-            // ->darkMode(false)
-            // ->topNavigation(false)
-            // ->sidebarWidth('16rem')
-            // // ✅ CONFIGURACIÓN DE BREADCRUMBS
-            // ->breadcrumbs(true)
-            // // ✅ CONFIGURACIÓN DE TENANCY (si se requiere en el futuro)
-            // ->tenant(null);
     }
 }

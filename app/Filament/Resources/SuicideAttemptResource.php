@@ -256,12 +256,12 @@ class SuicideAttemptResource extends Resource
                         ->visible(fn () => auth()->user()->can('export_patients')),
                 ]),
             ])
-            ->headerActions([
-                Tables\Actions\ImportAction::make()
-                    ->visible(fn () => auth()->user()->can('import_patients')),
-                Tables\Actions\ExportAction::make()
-                    ->visible(fn () => auth()->user()->can('export_patients')),
-            ])
+            // ->headerActions([
+            //     Tables\Actions\ImportAction::make()
+            //         ->visible(fn () => auth()->user()->can('import_patients')),
+            //     Tables\Actions\ExportAction::make()
+            //         ->visible(fn () => auth()->user()->can('export_patients')),
+            // ])
             ->defaultSort('event_date', 'desc');
     }
 
